@@ -433,26 +433,148 @@
     margin-right: 6px;
   }
 
-  /* ── TOC ── */
-  .toc {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin: 30px 0;
+  /* ── TOC (removed inline block, replaced by sidebar) ── */
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    width: 270px;
+    background: #12151c;
+    border-right: 1px solid rgba(67,97,238,0.25);
+    z-index: 8000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-270px);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
   }
-  .toc h3 { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
-  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 6px; }
-  .toc a {
+  #sidebar.open { transform: translateX(0); }
+
+  #sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid rgba(67,97,238,0.2);
+    flex-shrink: 0;
+  }
+  #sidebar-head span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #90a8ff;
+  }
+  #sidebar-close {
+    background: none;
+    border: none;
     color: var(--muted);
-    text-decoration: none;
-    font-size: 0.88rem;
-    padding: 5px 8px;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
     border-radius: 6px;
-    display: block;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s;
   }
-  .toc a:hover { background: rgba(67,97,238,0.1); color: #90a8ff; }
+  #sidebar-close:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+  #sidebar-nav {
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px 10px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(67,97,238,0.3) transparent;
+  }
+  #sidebar-nav::-webkit-scrollbar { width: 4px; }
+  #sidebar-nav::-webkit-scrollbar-thumb { background: rgba(67,97,238,0.3); border-radius: 4px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: 2px;
+    line-height: 1.4;
+  }
+  .nav-item:hover { background: rgba(67,97,238,0.1); color: var(--text); }
+  .nav-item.active {
+    background: rgba(67,97,238,0.18);
+    color: #90a8ff;
+    border-left: 3px solid #4361ee;
+    padding-left: 9px;
+  }
+  .nav-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-item.active .nav-num {
+    background: rgba(67,97,238,0.3);
+    color: #90a8ff;
+  }
+
+  /* ── SIDEBAR TOGGLE BUTTON (tab on edge) ── */
+  #sidebar-btn {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 7999;
+    background: #1c2333;
+    border: 1px solid rgba(67,97,238,0.4);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    color: #90a8ff;
+    padding: 14px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, transform 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+    writing-mode: vertical-rl;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  #sidebar-btn:hover { background: rgba(67,97,238,0.15); }
+  #sidebar-btn.shifted { left: 270px; }
+
+  /* push content when sidebar open on wide screens */
+  @media(min-width:900px) {
+    body.sb-open .container { margin-left: 290px; transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    body.sb-open .hero { padding-left: 290px; transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .container { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .hero { transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+  }
+  /* mobile: sidebar overlays */
+  #sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 7998;
+    backdrop-filter: blur(2px);
+  }
+  @media(max-width:899px) {
+    #sidebar-overlay.show { display: block; }
+  }
 
   /* ── RESPONSIVE ── */
   @media(max-width:480px) {
@@ -477,30 +599,40 @@
   </div>
 </div>
 
-<div class="container">
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div id="sidebar-overlay"></div>
 
-  <!-- TOC -->
-  <div class="toc">
-    <h3>Contents</h3>
-    <div class="toc-grid">
-      <a href="#s0">0. Dataset Setup</a>
-      <a href="#s1">1. Image as Numbers</a>
-      <a href="#s2">2. Preprocessing</a>
-      <a href="#s3">3. Architecture Overview</a>
-      <a href="#s4">4. Convolutional Layer</a>
-      <a href="#s5">5. ReLU Activation</a>
-      <a href="#s6">6. Pooling Layer</a>
-      <a href="#s7">7. What Each Layer Learns</a>
-      <a href="#s8">8. Flatten Layer</a>
-      <a href="#s9">9. Dense Layer</a>
-      <a href="#s10">10. Dropout</a>
-      <a href="#s11">11. Softmax Output</a>
-      <a href="#s12">12. Loss Function</a>
-      <a href="#s13">13. Backpropagation</a>
-      <a href="#s14">14. Training Loop</a>
-      <a href="#s15">15. Final Test</a>
-    </div>
+<!-- LEFT SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-head">
+    <span>Contents</span>
+    <button id="sidebar-close" title="Hide sidebar">✕</button>
   </div>
+  <nav id="sidebar-nav">
+    <a class="nav-item" href="#s0"><span class="nav-num">0</span>Dataset Setup</a>
+    <a class="nav-item" href="#s1"><span class="nav-num">1</span>Image as Numbers</a>
+    <a class="nav-item" href="#s2"><span class="nav-num">2</span>Preprocessing</a>
+    <a class="nav-item" href="#s3"><span class="nav-num">3</span>Architecture Overview</a>
+    <a class="nav-item" href="#s4"><span class="nav-num">4</span>Convolutional Layer</a>
+    <a class="nav-item" href="#s5"><span class="nav-num">5</span>ReLU Activation</a>
+    <a class="nav-item" href="#s6"><span class="nav-num">6</span>Pooling Layer</a>
+    <a class="nav-item" href="#s7"><span class="nav-num">7</span>What Each Layer Learns</a>
+    <a class="nav-item" href="#s8"><span class="nav-num">8</span>Flatten Layer</a>
+    <a class="nav-item" href="#s9"><span class="nav-num">9</span>Dense Layer</a>
+    <a class="nav-item" href="#s10"><span class="nav-num">10</span>Dropout</a>
+    <a class="nav-item" href="#s11"><span class="nav-num">11</span>Softmax Output</a>
+    <a class="nav-item" href="#s12"><span class="nav-num">12</span>Loss Function</a>
+    <a class="nav-item" href="#s13"><span class="nav-num">13</span>Backpropagation</a>
+    <a class="nav-item" href="#s14"><span class="nav-num">14</span>Training Loop</a>
+    <a class="nav-item" href="#s15"><span class="nav-num">15</span>Final Test</a>
+    <a class="nav-item" href="#summary"><span class="nav-num">★</span>Summary</a>
+  </nav>
+</div>
+
+<!-- SIDEBAR TOGGLE TAB -->
+<button id="sidebar-btn" title="Show / Hide contents">Contents</button>
+
+<div class="container">
 
   <!-- STEP 0 -->
   <div class="section" id="s0">
@@ -1515,6 +1647,59 @@
 <div style="text-align:center;padding:30px 20px 100px;color:var(--muted);font-size:0.82rem;border-top:1px solid var(--border);margin-top:20px">
   CNN Explained — 5 Animal Dataset Guide
 </div>
+
+<!-- SIDEBAR SCRIPT -->
+<script>
+  const sidebar  = document.getElementById('sidebar');
+  const sbBtn    = document.getElementById('sidebar-btn');
+  const sbClose  = document.getElementById('sidebar-close');
+  const sbOverlay= document.getElementById('sidebar-overlay');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sbBtn.classList.add('shifted');
+    sbOverlay.classList.add('show');
+    document.body.classList.add('sb-open');
+    sbBtn.textContent = 'Hide';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sbBtn.classList.remove('shifted');
+    sbOverlay.classList.remove('show');
+    document.body.classList.remove('sb-open');
+    sbBtn.textContent = 'Contents';
+  }
+  function toggleSidebar() {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  }
+
+  sbBtn.addEventListener('click', toggleSidebar);
+  sbClose.addEventListener('click', closeSidebar);
+  sbOverlay.addEventListener('click', closeSidebar);
+
+  // close on nav link click (mobile)
+  document.querySelectorAll('.nav-item').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth < 900) closeSidebar();
+    });
+  });
+
+  // active section highlight on scroll
+  const sections = document.querySelectorAll('.section, #summary');
+  const navLinks = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
+</script>
 
 <!-- FONT SIZE CONTROLLER -->
 <div id="font-ctrl">
