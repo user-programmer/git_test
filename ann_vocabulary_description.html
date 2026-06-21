@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Artificial Neural Networks — Vocabulary Reference</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bg4:#21262d;
+  --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+  --accent:#3fb950;--accent2:#58a6ff;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;}
+
+/* ── FONT CONTROLLER ── */
+#fc{
+  position:fixed;top:16px;right:16px;z-index:2000;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);width:220px;
+}
+#fc label{white-space:nowrap;font-size:12px;color:var(--muted);}
+#fc-val{color:var(--accent);font-weight:700;min-width:36px;font-size:12px;}
+#fc-slider{
+  flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+  outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--accent) var(--pct,31.25%),var(--bg4) var(--pct,31.25%));
+}
+#fc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+#fc-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+
+/* ── HAMBURGER BUTTON ── */
+#sidebar-btn{
+  position:fixed;top:16px;left:16px;z-index:1601;
+  background:rgba(28,35,51,.95);border:1px solid rgba(88,166,255,.3);
+  border-radius:8px;color:var(--accent);
+  width:44px;height:44px;cursor:pointer;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:background .2s;box-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+#sidebar-btn:hover{background:rgba(88,166,255,.15);}
+#sidebar-btn .bar{
+  display:block;width:20px;height:2px;background:currentColor;border-radius:2px;
+  transition:transform .25s,opacity .25s;
+}
+#sidebar-btn.open .bar:nth-child(1){transform:translateY(7px) rotate(45deg);}
+#sidebar-btn.open .bar:nth-child(2){opacity:0;}
+#sidebar-btn.open .bar:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:280px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:1500;
+  transform:translateX(-280px);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  padding:70px 0 40px;
+}
+#sidebar.open{transform:translateX(0);}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(88,166,255,.25);border-radius:4px;}
+.nav-part{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);padding:14px 18px 4px;font-weight:700;
+}
+#sidebar a{
+  display:flex;align-items:center;gap:10px;
+  padding:5px 18px;font-size:0.8rem;
+  color:var(--muted);text-decoration:none;
+  border-left:2px solid transparent;transition:all .2s;
+}
+#sidebar a:hover{color:var(--text);background:var(--bg3);}
+#sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.06);}
+.nav-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:4px;
+  background:var(--bg3);border:1px solid var(--border);
+  font-size:0.68rem;font-weight:700;color:var(--muted);flex-shrink:0;
+}
+#sidebar a.active .nav-num{background:rgba(88,166,255,.15);color:var(--accent);border-color:var(--accent);}
+
+/* ── BACKDROP ── */
+#backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1400;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:1024px){
+  body.sb-open .container{margin-left:300px;}
+  .container{transition:margin-left .3s cubic-bezier(.4,0,.2,1);}
+}
+@media(max-width:599px){
+  #sidebar{width:85vw;}
+}
+
+/* ── LAYOUT ── */
+.container{max-width:860px;margin:0 auto;padding:80px 20px 60px;}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:20px 0 36px;}
+.hero h1{
+  font-size:2.2rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.hero p{color:var(--muted);font-size:0.95rem;}
+.hero .pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;}
+.pill{
+  display:inline-block;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;
+  background:rgba(88,166,255,.12);color:var(--accent);border:1px solid rgba(88,166,255,.3);
+}
+
+/* ── SECTION BANNER ── */
+.section-banner{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border);border-radius:10px;
+  padding:14px 22px;margin:32px 0 16px;
+  border-left:4px solid var(--accent);
+}
+.section-banner h2{
+  font-size:1rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);margin:0;
+}
+
+/* ── VOCAB CARD ── */
+.vocab-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  margin-bottom:14px;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+.vocab-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent), 0 4px 20px rgba(0,0,0,.3);
+}
+.vc-header{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 18px 10px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg3);
+}
+.vc-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:30px;height:30px;border-radius:6px;
+  background:rgba(88,166,255,.12);border:1px solid var(--accent);
+  font-size:0.78rem;font-weight:800;color:var(--accent);flex-shrink:0;
+}
+.vc-term{
+  font-size:1rem;font-weight:700;color:var(--accent);
+}
+.vc-body{padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px;}
+.vc-row{display:flex;gap:12px;align-items:flex-start;}
+.row-label{
+  flex-shrink:0;min-width:88px;
+  font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);padding-top:2px;
+}
+.ex-label{color:var(--accent2);}
+.row-text{font-size:0.88rem;color:var(--text);line-height:1.65;}
+.ex-row .row-text{
+  color:var(--muted);font-style:italic;
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;font-style:normal;
+  border-left:3px solid var(--accent2);
+  font-family:'Courier New',monospace;font-size:0.82rem;
+}
+
+/* ── PRINT STYLES ── */
+@media print{
+  #fc,#sidebar-btn,#sidebar,#backdrop{display:none!important;}
+  body{background:#fff;color:#000;}
+  .container{margin:0;padding:20px;max-width:100%;}
+  .vocab-card{break-inside:avoid;border:1px solid #ccc;margin-bottom:10px;}
+  .vc-header{background:#f5f5f5;}
+  .vc-term{color:#1a1a6e;}
+  .section-banner{background:#eef;border-left:4px solid #339;}
+  .section-banner h2{color:#339;}
+  .row-text{color:#222;}
+  .ex-row .row-text{background:#f9f9f9;border-color:#ccc;color:#444;}
+}
+
+@media(max-width:600px){
+  .vc-header{flex-wrap:wrap;}
+  .vc-row{flex-direction:column;gap:4px;}
+  .row-label{min-width:unset;}
+  .hero h1{font-size:1.6rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Font Controller -->
+<div id="fc">
+  <label>A</label>
+  <input id="fc-slider" type="range" min="10" max="64" step="1" value="16" style="--pct:31.25%"/>
+  <span id="fc-val">16px</span>
+</div>
+
+<!-- Hamburger -->
+<button id="sidebar-btn" aria-label="Toggle navigation" title="Toggle menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
+
+<div id="backdrop"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+<div class="nav-part">Part 1 — Core Concepts</div>
+<a href="#artificial-neural-network-ann"><span class="nav-num">1</span>Artificial Neural Network (ANN)</a>
+<a href="#neuron-node"><span class="nav-num">2</span>Neuron / Node</a>
+<a href="#weight"><span class="nav-num">3</span>Weight</a>
+<a href="#bias"><span class="nav-num">4</span>Bias</a>
+<a href="#input-layer"><span class="nav-num">5</span>Input Layer</a>
+<a href="#hidden-layer"><span class="nav-num">6</span>Hidden Layer</a>
+<a href="#output-layer"><span class="nav-num">7</span>Output Layer</a>
+<div class="nav-part">Part 2 — Activation Functions</div>
+<a href="#activation-function"><span class="nav-num">8</span>Activation Function</a>
+<a href="#sigmoid"><span class="nav-num">9</span>Sigmoid</a>
+<a href="#relu-rectified-linear-unit"><span class="nav-num">10</span>ReLU (Rectified Linear Unit)</a>
+<a href="#tanh-hyperbolic-tangent"><span class="nav-num">11</span>Tanh (Hyperbolic Tangent)</a>
+<a href="#softmax"><span class="nav-num">12</span>Softmax</a>
+<div class="nav-part">Part 3 — Training</div>
+<a href="#forward-pass"><span class="nav-num">13</span>Forward Pass</a>
+<a href="#loss-function"><span class="nav-num">14</span>Loss Function</a>
+<a href="#binary-cross-entropy"><span class="nav-num">15</span>Binary Cross-Entropy</a>
+<a href="#backpropagation"><span class="nav-num">16</span>Backpropagation</a>
+<a href="#gradient-descent"><span class="nav-num">17</span>Gradient Descent</a>
+<a href="#learning-rate"><span class="nav-num">18</span>Learning Rate (η)</a>
+<a href="#epoch"><span class="nav-num">19</span>Epoch</a>
+<a href="#batch-size"><span class="nav-num">20</span>Batch Size</a>
+<a href="#normalisation"><span class="nav-num">21</span>Normalisation</a>
+<div class="nav-part">Part 4 — Image Processing</div>
+<a href="#grayscale-image"><span class="nav-num">22</span>Grayscale Image</a>
+<a href="#rgb-image"><span class="nav-num">23</span>RGB Image</a>
+<a href="#flatten"><span class="nav-num">24</span>Flatten</a>
+<a href="#weighted-sum"><span class="nav-num">25</span>Weighted Sum (Σ)</a>
+
+</nav>
+
+<!-- Content -->
+<div class="container">
+  <div class="hero">
+    <h1>Artificial Neural Networks</h1>
+    <p>Vocabulary Reference — Fundamentals · Grayscale · RGB Images</p>
+    <div class="pills">
+      <span class="pill">Vocabulary</span>
+      <span class="pill">Description</span>
+      <span class="pill">Example</span>
+      <span class="pill">Print Ready</span>
+    </div>
+  </div>
+
+
+<div class="section-banner" id="sec-part-1-core-concepts">
+  <h2>Part 1 — Core Concepts</h2>
+</div>
+
+<div class="vocab-card" id="artificial-neural-network-ann">
+  <div class="vc-header">
+    <span class="vc-num">1</span>
+    <span class="vc-term">Artificial Neural Network (ANN)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A computational model inspired by the human brain, made up of layers of interconnected neurons. It learns to map inputs to outputs by adjusting internal parameters called weights through a training process.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">A 2-layer ANN with inputs [study_hours=8, sleep_hours=7] predicts whether a student Passes or Fails an exam.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="neuron-node">
+  <div class="vc-header">
+    <span class="vc-num">2</span>
+    <span class="vc-term">Neuron / Node</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The basic processing unit of an ANN. Each neuron receives one or more numeric inputs, multiplies each by a weight, sums them all, adds a bias, then passes the result through an activation function.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Neuron receives x₁=0.8 and x₂=0.5; computes z = (0.8×0.4)+(0.5×−0.3)+0.1 = 0.29; outputs sigmoid(0.29) = 0.572.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="weight">
+  <div class="vc-header">
+    <span class="vc-num">3</span>
+    <span class="vc-term">Weight</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A numeric parameter that controls how strongly an input influences a neuron's output. Positive weights amplify the input; negative weights suppress it. Weights are learned during training via backpropagation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Weight w₁=0.4 on input x₁=0.8 contributes 0.4×0.8=0.32 to the neuron's weighted sum.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="bias">
+  <div class="vc-header">
+    <span class="vc-num">4</span>
+    <span class="vc-term">Bias</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A constant value added to the weighted sum inside a neuron, separate from any input. It shifts the activation threshold, allowing the neuron to fire even when all inputs are zero.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">With inputs zero but bias=0.1, the neuron still has z=0.1 and a non-zero output, rather than being completely silent.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="input-layer">
+  <div class="vc-header">
+    <span class="vc-num">5</span>
+    <span class="vc-term">Input Layer</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The first layer of the network. It holds the raw input data, one neuron per feature. No computation happens here — it simply passes values to the next layer.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">For the Pass/Fail problem: Input Layer has 2 neurons — one for study_hours (0.8) and one for sleep_hours (0.7).</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="hidden-layer">
+  <div class="vc-header">
+    <span class="vc-num">6</span>
+    <span class="vc-term">Hidden Layer</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">One or more intermediate layers between Input and Output. Each neuron learns to detect a pattern or combination of the previous layer's signals. More hidden layers allow detection of more complex patterns.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">A hidden layer of 3 neurons learns combinations like "high study AND low sleep" or "average of both", helping the network separate Pass from Fail cases.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="output-layer">
+  <div class="vc-header">
+    <span class="vc-num">7</span>
+    <span class="vc-term">Output Layer</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The final layer that produces the network's prediction. For binary classification it has 1 neuron (0–1 probability). For 10-class classification it has 10 neurons, each giving a probability for one class.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">For Pass/Fail: Output neuron outputs 0.58, meaning 58% probability of Pass. Since 0.58 > 0.5, the prediction is PASS.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-2-activation-functions">
+  <h2>Part 2 — Activation Functions</h2>
+</div>
+
+<div class="vocab-card" id="activation-function">
+  <div class="vc-header">
+    <span class="vc-num">8</span>
+    <span class="vc-term">Activation Function</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A mathematical function applied to a neuron's weighted sum to introduce non-linearity. Without it, stacking layers would still just be one linear equation. It decides whether and how strongly a neuron "fires".</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Without activation: 3 linear layers = 1 linear layer. With ReLU, the network can learn curves and complex decision boundaries.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="sigmoid">
+  <div class="vc-header">
+    <span class="vc-num">9</span>
+    <span class="vc-term">Sigmoid</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An S-shaped activation function that squashes any real number into the range 0 to 1. Formula: σ(z) = 1/(1+e⁻ᶻ). Ideal for binary classification output layers because the result can be read as a probability.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">σ(0.97)=0.725;  σ(0)=0.5;  σ(−3)=0.047. Used as the final neuron for Pass/Fail — output 0.58 means 58% chance of Pass.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="relu-rectified-linear-unit">
+  <div class="vc-header">
+    <span class="vc-num">10</span>
+    <span class="vc-term">ReLU (Rectified Linear Unit)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The most widely used activation function in hidden layers. Formula: max(0, z). If the input is positive it passes through unchanged; if negative it outputs zero. Fast and avoids the vanishing gradient problem.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">ReLU(3.5)=3.5;  ReLU(−1.2)=0. In an 8×8 image ANN, many hidden neurons output zero (ReLU kills negative weighted sums), keeping the network sparse and efficient.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="tanh-hyperbolic-tangent">
+  <div class="vc-header">
+    <span class="vc-num">11</span>
+    <span class="vc-term">Tanh (Hyperbolic Tangent)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An activation function that maps any value to the range −1 to +1, and is zero-centred. Often used in hidden layers when data has both positive and negative patterns, as it can distinguish them naturally.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">tanh(0)=0,  tanh(1)=0.76,  tanh(−1)=−0.76. More useful than Sigmoid for hidden layers in text or NLP tasks where negative features matter.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="softmax">
+  <div class="vc-header">
+    <span class="vc-num">12</span>
+    <span class="vc-term">Softmax</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An activation function used in the output layer for multi-class problems. It converts a vector of raw scores (logits) into probabilities that all sum to exactly 1, so each value represents the probability of one class.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Raw scores [2.0, 1.0, 0.1] → Softmax → [0.70, 0.24, 0.06]. The first class has 70% probability and would be chosen as the prediction.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-3-training">
+  <h2>Part 3 — Training</h2>
+</div>
+
+<div class="vocab-card" id="forward-pass">
+  <div class="vc-header">
+    <span class="vc-num">13</span>
+    <span class="vc-term">Forward Pass</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The process of sending input data through the network from the input layer to the output layer, computing each neuron's output at every layer in sequence. This produces a prediction without changing any weights.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Input [0.8, 0.7] → Hidden layer (3 neurons) → Output neuron → ŷ=0.58. Numbers flow forward through every weight and activation until a result appears.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="loss-function">
+  <div class="vc-header">
+    <span class="vc-num">14</span>
+    <span class="vc-term">Loss Function</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A formula that measures how wrong the network's prediction is compared to the true label. The goal of training is to minimise this value. Different tasks use different loss functions.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Prediction ŷ=0.58, true label y=1 (Pass). Binary Cross-Entropy: L = −log(0.58) = 0.544. If ŷ were 0.99: L = −log(0.99) = 0.01 — much lower, indicating a near-perfect prediction.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="binary-cross-entropy">
+  <div class="vc-header">
+    <span class="vc-num">15</span>
+    <span class="vc-term">Binary Cross-Entropy</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The standard loss function for binary (two-class) classification. Penalises confident wrong answers heavily and rewards confident correct answers. Formula: L = −[y·log(ŷ) + (1−y)·log(1−ŷ)].</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">y=1, ŷ=0.58 → L=0.544.  y=1, ŷ=0.99 → L=0.01.  y=0, ŷ=0.02 → L≈0.02. Lower is better.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="backpropagation">
+  <div class="vc-header">
+    <span class="vc-num">16</span>
+    <span class="vc-term">Backpropagation</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The algorithm that computes how much each weight contributed to the prediction error. It uses the chain rule of calculus to work backwards from the output layer to the input layer, calculating gradients for every weight.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">After computing loss=0.544, backprop finds weight w=0.7 has gradient=0.12, meaning "increasing w increases loss". So we subtract η×0.12 from w to move toward lower loss.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="gradient-descent">
+  <div class="vc-header">
+    <span class="vc-num">17</span>
+    <span class="vc-term">Gradient Descent</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The optimisation method that updates each weight by a small step in the direction that reduces the loss. Formula: w_new = w_old − η × (∂Loss/∂w). Repeated over many iterations, the loss converges toward a minimum.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">w=0.7, gradient=0.12, η=0.1 → w_new = 0.7 − 0.1×0.12 = 0.688. The weight moved a small step closer to a value that produces lower loss.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="learning-rate">
+  <div class="vc-header">
+    <span class="vc-num">18</span>
+    <span class="vc-term">Learning Rate (η)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A hyperparameter that controls how large each weight update step is during gradient descent. Too large: training overshoots and becomes unstable. Too small: training is slow. Typical values: 0.001 to 0.01.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">η=1.0 (too large): weights oscillate, loss goes up. η=0.0001 (too small): needs 10× more epochs. η=0.01 (good): loss steadily decreases each epoch.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="epoch">
+  <div class="vc-header">
+    <span class="vc-num">19</span>
+    <span class="vc-term">Epoch</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">One complete pass through the entire training dataset — every sample is seen once by the network. Training runs for many epochs until the loss stops improving. Typical range: 10 to 1000 epochs.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">With 5 training samples: Epoch 1 → loss=0.95. After 100 epochs → loss=0.15. After 200 epochs → loss=0.05, showing the network is converging.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="batch-size">
+  <div class="vc-header">
+    <span class="vc-num">20</span>
+    <span class="vc-term">Batch Size</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The number of training samples processed together before the weights are updated. Full batch uses all data at once (stable but slow). Mini-batch (32–256) balances speed and stability. Stochastic uses 1 sample.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">With 1000 training images and batch_size=32: each epoch processes 1000÷32≈31 batches. Weights update 31 times per epoch instead of just once.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="normalisation">
+  <div class="vc-header">
+    <span class="vc-num">21</span>
+    <span class="vc-term">Normalisation</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Scaling raw input values to a small consistent range (usually 0–1 or −1 to +1) before feeding them to the network. Prevents large values from dominating small ones and speeds up training significantly.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Pixel value 200 ÷ 255 = 0.784. Study hours 8 ÷ 10 = 0.8. Without normalisation, a 200-pixel value would have 200× more influence on the weighted sum than a 1-hour study value.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-4-image-processing">
+  <h2>Part 4 — Image Processing</h2>
+</div>
+
+<div class="vocab-card" id="grayscale-image">
+  <div class="vc-header">
+    <span class="vc-num">22</span>
+    <span class="vc-term">Grayscale Image</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An image where each pixel is represented by a single number from 0 (pure black) to 255 (pure white), encoding only brightness with no colour information. It requires only 1 channel of data.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">An 8×8 grayscale image has 64 pixel values: [20, 30, 40, 25, 140, 160, 200, 220, ...]. After normalisation: [0.08, 0.12, 0.16, 0.10, 0.55, 0.63, 0.78, 0.86, ...].</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="rgb-image">
+  <div class="vc-header">
+    <span class="vc-num">23</span>
+    <span class="vc-term">RGB Image</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A colour image where each pixel has three separate values — Red, Green, and Blue — each ranging from 0 to 255. The three channels combine to produce every visible colour. An RGB image holds 3× more data than grayscale.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">An orange pixel: R=210, G=80, B=60. White: R=255, G=255, B=255. An 8×8 RGB image has 8×8×3=192 values vs 64 for grayscale.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="flatten">
+  <div class="vc-header">
+    <span class="vc-num">24</span>
+    <span class="vc-term">Flatten</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The operation of converting a 2D image grid into a 1D vector so it can be fed into an ANN's input layer. Done by reading pixels row by row from top-left to bottom-right. Spatial structure is lost.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">4×4 image → Row1 [10,30,200,220], Row2 [5,50,210,240], Row3 [15,80,190,230], Row4 [20,60,200,250] → flat 16-value vector fed to 16 input neurons.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="weighted-sum">
+  <div class="vc-header">
+    <span class="vc-num">25</span>
+    <span class="vc-term">Weighted Sum (Σ)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The core computation inside each neuron: multiply every input by its corresponding weight, then add all the results together, then add the bias. Written as z = Σ(xᵢ × wᵢ) + b.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Inputs [0.8, 0.7], weights [0.5, −0.3], bias 0.1: z = (0.8×0.5)+(0.7×−0.3)+0.1 = 0.40−0.21+0.10 = 0.29. This z then goes into the activation function.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── FONT CONTROLLER ──
+(function(){
+  const slider = document.getElementById('fc-slider');
+  const valLbl = document.getElementById('fc-val');
+  const MIN=10, MAX=64, DEFAULT=16;
+  function applySize(px){
+    document.documentElement.style.fontSize = px+'px';
+    valLbl.textContent = px+'px';
+    slider.style.setProperty('--pct', ((px-MIN)/(MAX-MIN)*100).toFixed(2)+'%');
+  }
+  slider.value = DEFAULT; applySize(DEFAULT);
+  slider.addEventListener('input', ()=>applySize(+slider.value));
+})();
+
+// ── SIDEBAR ──
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sidebar-btn');
+  const backdrop= document.getElementById('backdrop');
+
+  function open(){
+    sidebar.classList.add('open');
+    btn.classList.add('open');
+    document.body.classList.add('sb-open');
+    if(window.innerWidth < 1024) backdrop.style.display='block';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    btn.classList.remove('open');
+    document.body.classList.remove('sb-open');
+    backdrop.style.display='none';
+  }
+
+  btn.addEventListener('click', ()=> sidebar.classList.contains('open') ? close() : open());
+  backdrop.addEventListener('click', close);
+  if(window.innerWidth >= 1024) open();
+  window.addEventListener('resize', ()=>{ if(window.innerWidth >= 1024) backdrop.style.display='none'; });
+
+  // Active link highlighting
+  const links    = sidebar.querySelectorAll('a[href^="#"]');
+  const cards    = Array.from(document.querySelectorAll('.vocab-card[id]'));
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        links.forEach(a => a.classList.remove('active'));
+        const active = sidebar.querySelector(`a[href="#${e.target.id}"]`);
+        if(active){ active.classList.add('active'); active.scrollIntoView({block:'nearest'}); }
+      }
+    });
+  }, {rootMargin:'-10% 0px -80% 0px', threshold:0});
+
+  cards.forEach(c => obs.observe(c));
+
+  links.forEach(a => a.addEventListener('click', ()=>{
+    if(window.innerWidth < 1024) close();
+  }));
+})();
+</script>
+</body>
+</html>

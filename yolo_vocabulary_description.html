@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>YOLO Object Detection — Vocabulary Reference</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bg4:#21262d;
+  --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+  --accent:#f0883e;--accent2:#e3b341;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;}
+
+/* ── FONT CONTROLLER ── */
+#fc{
+  position:fixed;top:16px;right:16px;z-index:2000;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);width:220px;
+}
+#fc label{white-space:nowrap;font-size:12px;color:var(--muted);}
+#fc-val{color:var(--accent);font-weight:700;min-width:36px;font-size:12px;}
+#fc-slider{
+  flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+  outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--accent) var(--pct,31.25%),var(--bg4) var(--pct,31.25%));
+}
+#fc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+#fc-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+
+/* ── HAMBURGER BUTTON ── */
+#sidebar-btn{
+  position:fixed;top:16px;left:16px;z-index:1601;
+  background:rgba(28,35,51,.95);border:1px solid rgba(88,166,255,.3);
+  border-radius:8px;color:var(--accent);
+  width:44px;height:44px;cursor:pointer;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:background .2s;box-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+#sidebar-btn:hover{background:rgba(88,166,255,.15);}
+#sidebar-btn .bar{
+  display:block;width:20px;height:2px;background:currentColor;border-radius:2px;
+  transition:transform .25s,opacity .25s;
+}
+#sidebar-btn.open .bar:nth-child(1){transform:translateY(7px) rotate(45deg);}
+#sidebar-btn.open .bar:nth-child(2){opacity:0;}
+#sidebar-btn.open .bar:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:280px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:1500;
+  transform:translateX(-280px);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  padding:70px 0 40px;
+}
+#sidebar.open{transform:translateX(0);}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(88,166,255,.25);border-radius:4px;}
+.nav-part{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);padding:14px 18px 4px;font-weight:700;
+}
+#sidebar a{
+  display:flex;align-items:center;gap:10px;
+  padding:5px 18px;font-size:0.8rem;
+  color:var(--muted);text-decoration:none;
+  border-left:2px solid transparent;transition:all .2s;
+}
+#sidebar a:hover{color:var(--text);background:var(--bg3);}
+#sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.06);}
+.nav-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:4px;
+  background:var(--bg3);border:1px solid var(--border);
+  font-size:0.68rem;font-weight:700;color:var(--muted);flex-shrink:0;
+}
+#sidebar a.active .nav-num{background:rgba(88,166,255,.15);color:var(--accent);border-color:var(--accent);}
+
+/* ── BACKDROP ── */
+#backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1400;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:1024px){
+  body.sb-open .container{margin-left:300px;}
+  .container{transition:margin-left .3s cubic-bezier(.4,0,.2,1);}
+}
+@media(max-width:599px){
+  #sidebar{width:85vw;}
+}
+
+/* ── LAYOUT ── */
+.container{max-width:860px;margin:0 auto;padding:80px 20px 60px;}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:20px 0 36px;}
+.hero h1{
+  font-size:2.2rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.hero p{color:var(--muted);font-size:0.95rem;}
+.hero .pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;}
+.pill{
+  display:inline-block;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;
+  background:rgba(88,166,255,.12);color:var(--accent);border:1px solid rgba(88,166,255,.3);
+}
+
+/* ── SECTION BANNER ── */
+.section-banner{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border);border-radius:10px;
+  padding:14px 22px;margin:32px 0 16px;
+  border-left:4px solid var(--accent);
+}
+.section-banner h2{
+  font-size:1rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);margin:0;
+}
+
+/* ── VOCAB CARD ── */
+.vocab-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  margin-bottom:14px;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+.vocab-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent), 0 4px 20px rgba(0,0,0,.3);
+}
+.vc-header{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 18px 10px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg3);
+}
+.vc-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:30px;height:30px;border-radius:6px;
+  background:rgba(88,166,255,.12);border:1px solid var(--accent);
+  font-size:0.78rem;font-weight:800;color:var(--accent);flex-shrink:0;
+}
+.vc-term{
+  font-size:1rem;font-weight:700;color:var(--accent);
+}
+.vc-body{padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px;}
+.vc-row{display:flex;gap:12px;align-items:flex-start;}
+.row-label{
+  flex-shrink:0;min-width:88px;
+  font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);padding-top:2px;
+}
+.ex-label{color:var(--accent2);}
+.row-text{font-size:0.88rem;color:var(--text);line-height:1.65;}
+.ex-row .row-text{
+  color:var(--muted);font-style:italic;
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;font-style:normal;
+  border-left:3px solid var(--accent2);
+  font-family:'Courier New',monospace;font-size:0.82rem;
+}
+
+/* ── PRINT STYLES ── */
+@media print{
+  #fc,#sidebar-btn,#sidebar,#backdrop{display:none!important;}
+  body{background:#fff;color:#000;}
+  .container{margin:0;padding:20px;max-width:100%;}
+  .vocab-card{break-inside:avoid;border:1px solid #ccc;margin-bottom:10px;}
+  .vc-header{background:#f5f5f5;}
+  .vc-term{color:#1a1a6e;}
+  .section-banner{background:#eef;border-left:4px solid #339;}
+  .section-banner h2{color:#339;}
+  .row-text{color:#222;}
+  .ex-row .row-text{background:#f9f9f9;border-color:#ccc;color:#444;}
+}
+
+@media(max-width:600px){
+  .vc-header{flex-wrap:wrap;}
+  .vc-row{flex-direction:column;gap:4px;}
+  .row-label{min-width:unset;}
+  .hero h1{font-size:1.6rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Font Controller -->
+<div id="fc">
+  <label>A</label>
+  <input id="fc-slider" type="range" min="10" max="64" step="1" value="16" style="--pct:31.25%"/>
+  <span id="fc-val">16px</span>
+</div>
+
+<!-- Hamburger -->
+<button id="sidebar-btn" aria-label="Toggle navigation" title="Toggle menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
+
+<div id="backdrop"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+<div class="nav-part">Part 1 — YOLO Fundamentals</div>
+<a href="#yolo-you-only-look-once"><span class="nav-num">1</span>YOLO (You Only Look Once)</a>
+<a href="#single-pass-detection"><span class="nav-num">2</span>Single-Pass Detection</a>
+<a href="#r-cnn-region-based-cnn"><span class="nav-num">3</span>R-CNN (Region-based CNN)</a>
+<a href="#darknet-framework"><span class="nav-num">4</span>Darknet Framework</a>
+<a href="#anchor-boxes"><span class="nav-num">5</span>Anchor Boxes</a>
+<a href="#grid-system"><span class="nav-num">6</span>Grid System</a>
+<a href="#map-mean-average-precision"><span class="nav-num">7</span>mAP (mean Average Precision)</a>
+<a href="#fps-frames-per-second"><span class="nav-num">8</span>FPS (Frames Per Second)</a>
+<div class="nav-part">Part 2 — YOLOv8 Architecture</div>
+<a href="#backbone"><span class="nav-num">9</span>Backbone</a>
+<a href="#neck-pan-fpn"><span class="nav-num">10</span>Neck (PAN-FPN)</a>
+<a href="#head"><span class="nav-num">11</span>Head</a>
+<a href="#cspdarknet"><span class="nav-num">12</span>CSPDarknet</a>
+<a href="#c2f-module"><span class="nav-num">13</span>C2f Module</a>
+<a href="#sppf-spatial-pyramid-pooling-fast"><span class="nav-num">14</span>SPPF (Spatial Pyramid Pooling Fast)</a>
+<a href="#silu-activation"><span class="nav-num">15</span>SiLU Activation</a>
+<a href="#decoupled-head"><span class="nav-num">16</span>Decoupled Head</a>
+<div class="nav-part">Part 3 — Detection & Evaluation</div>
+<a href="#bounding-box"><span class="nav-num">17</span>Bounding Box</a>
+<a href="#confidence-score"><span class="nav-num">18</span>Confidence Score</a>
+<a href="#iou-intersection-over-union"><span class="nav-num">19</span>IoU (Intersection over Union)</a>
+<a href="#nms-non-maximum-suppression"><span class="nav-num">20</span>NMS (Non-Maximum Suppression)</a>
+<a href="#anchor-free-detection"><span class="nav-num">21</span>Anchor-Free Detection</a>
+<a href="#dfl-loss-distribution-focal-loss"><span class="nav-num">22</span>DFL Loss (Distribution Focal Loss)</a>
+<a href="#tal-task-aligned-learning"><span class="nav-num">23</span>TAL (Task-Aligned Learning)</a>
+
+</nav>
+
+<!-- Content -->
+<div class="container">
+  <div class="hero">
+    <h1>YOLO Object Detection</h1>
+    <p>Vocabulary Reference — Versions · Architecture · YOLOv8</p>
+    <div class="pills">
+      <span class="pill">Vocabulary</span>
+      <span class="pill">Description</span>
+      <span class="pill">Example</span>
+      <span class="pill">Print Ready</span>
+    </div>
+  </div>
+
+
+<div class="section-banner" id="sec-part-1-yolo-fundamentals">
+  <h2>Part 1 — YOLO Fundamentals</h2>
+</div>
+
+<div class="vocab-card" id="yolo-you-only-look-once">
+  <div class="vc-header">
+    <span class="vc-num">1</span>
+    <span class="vc-term">YOLO (You Only Look Once)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A family of real-time object detection models. Unlike earlier methods that process an image multiple times, YOLO passes the image through the CNN exactly once and simultaneously predicts all bounding boxes and classes.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">R-CNN feeds 2,000 region crops into the CNN separately → slow. YOLO feeds 1 image → single CNN pass → all detections at once. YOLOv8n achieves ~80 FPS on a GPU for real-time video.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="single-pass-detection">
+  <div class="vc-header">
+    <span class="vc-num">2</span>
+    <span class="vc-term">Single-Pass Detection</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">YOLO's defining characteristic: the entire image goes through the network exactly once. The CNN processes all spatial locations simultaneously, making detection much faster than region-proposal methods.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">R-CNN runs CNN 2,000 times per image (once per candidate region). YOLO runs CNN once: 640×640 image → [backbone→neck→head] → 8,400 box predictions, all in one forward pass.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="r-cnn-region-based-cnn">
+  <div class="vc-header">
+    <span class="vc-num">3</span>
+    <span class="vc-term">R-CNN (Region-based CNN)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An earlier object detection approach that first generates ~2,000 candidate regions using selective search, then runs a CNN separately on each region. Accurate but extremely slow (47 seconds per image).</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">R-CNN on 640×640 image: Selective Search → 2,000 regions → run VGG-16 on each → 2,000 × CNN forward passes → classify each region. YOLO replaces this with 1 forward pass.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="darknet-framework">
+  <div class="vc-header">
+    <span class="vc-num">4</span>
+    <span class="vc-term">Darknet Framework</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An open-source neural network framework written in C and CUDA by Joseph Redmon. Used to train and run YOLOv1–v4. Designed for speed on GPUs and CPUs. Later versions (v5–v11) moved to PyTorch.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Train YOLOv3 with Darknet: ./darknet detector train cfg/coco.data cfg/yolov3.cfg darknet53.conv.74. The C/CUDA code runs faster than Python on embedded devices like Jetson Nano.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="anchor-boxes">
+  <div class="vc-header">
+    <span class="vc-num">5</span>
+    <span class="vc-term">Anchor Boxes</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Predefined bounding box shapes of various aspect ratios and scales, used in YOLOv2–v7. The network predicts small adjustments to these anchors rather than predicting coordinates from scratch, making learning easier.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Anchors: [(10×13), (16×30), (33×23)]. A car best matches anchor (33×23). Network predicts offsets Δx=0.2, Δy=−0.1, Δw=1.4, Δh=0.9 to refine anchor into the exact box.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="grid-system">
+  <div class="vc-header">
+    <span class="vc-num">6</span>
+    <span class="vc-term">Grid System</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">YOLO divides the input image into an S×S grid (e.g. 80×80, 40×40, 20×20). Each grid cell is responsible for detecting objects whose centre falls within that cell, giving YOLO its spatial structure.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Image divided into 80×80 grid = 6,400 cells. A dog's centre is at pixel (320,240) on a 640×640 image → grid cell (40,30). That cell is responsible for detecting the dog.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="map-mean-average-precision">
+  <div class="vc-header">
+    <span class="vc-num">7</span>
+    <span class="vc-term">mAP (mean Average Precision)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The standard metric for evaluating object detection. Precision measures how many detections were correct; Recall measures how many true objects were found. AP averages over confidence thresholds; mAP averages AP over all classes.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">COCO dataset: YOLOv8n mAP₅₀₋₉₅=37.3%. Across 80 classes, averaging precision at IoU thresholds 0.50–0.95, the model is correct 37.3% of the time. YOLOv8x achieves 53.9%.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="fps-frames-per-second">
+  <div class="vc-header">
+    <span class="vc-num">8</span>
+    <span class="vc-term">FPS (Frames Per Second)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A measure of detection speed — how many images the model can process per second. Higher FPS enables real-time video. Larger models are more accurate but slower; nano models prioritise speed.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">YOLOv8n: ~80 FPS on GPU (real-time for 30 FPS video). YOLOv8x: ~20 FPS on same GPU. On CPU: YOLOv8n ~5 FPS, YOLOv8x ~1 FPS.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-2-yolov8-architecture">
+  <h2>Part 2 — YOLOv8 Architecture</h2>
+</div>
+
+<div class="vocab-card" id="backbone">
+  <div class="vc-header">
+    <span class="vc-num">9</span>
+    <span class="vc-term">Backbone</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The first part of a YOLO network that processes the raw image and extracts multi-scale feature representations. Typically a deep CNN pre-trained on large datasets. YOLOv8 uses CSPDarknet with C2f modules.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">YOLOv8n backbone: input [640×640×3] → 5 stages → feature maps at [80×80×128], [40×40×256], [20×20×512]. Each scale captures different levels of detail.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="neck-pan-fpn">
+  <div class="vc-header">
+    <span class="vc-num">10</span>
+    <span class="vc-term">Neck (PAN-FPN)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The middle section of YOLO that combines feature maps from different backbone scales. Fuses low-resolution (large context) and high-resolution (fine detail) features to improve detection at all object sizes.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">PAN-FPN: takes backbone outputs [80×80], [40×40], [20×20] → upsample and merge → enriched feature maps. Now the 80×80 map has both fine detail AND context from the 20×20 deep map.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="head">
+  <div class="vc-header">
+    <span class="vc-num">11</span>
+    <span class="vc-term">Head</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The final part of the network that makes actual predictions from the neck's feature maps. In YOLOv8 the head is decoupled — separate branches for classification (what) and regression (where), at three scales.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">For each of 8,400 candidate positions (6400+1600+400), the head outputs: [x,y,w,h] box, confidence score, and 80 class probabilities. Final output: all detected objects in the image.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="cspdarknet">
+  <div class="vc-header">
+    <span class="vc-num">12</span>
+    <span class="vc-term">CSPDarknet</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Cross Stage Partial Network — the backbone architecture used from YOLOv4 onward. It splits the feature map into two paths: one goes through dense convolution blocks, one skips ahead. Both are merged at the end.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Without CSP: layer output copied to every subsequent layer → high memory. With CSP: 50% of channels go through Conv layers, 50% skip → then merge. YOLOv8n achieves similar accuracy to YOLOv5s with 30% fewer parameters.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="c2f-module">
+  <div class="vc-header">
+    <span class="vc-num">13</span>
+    <span class="vc-term">C2f Module</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">YOLOv8's core feature extraction block (Cross-Stage Partial with 2 Faster bottlenecks). Enables richer gradient flow during training while keeping the model compact. Replaces the C3 block from YOLOv5.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">C2f input: 256-channel feature map → split → Branch 1: through 2 bottlenecks. Branch 2: direct connection. Both merged → 256-channel output with richer learned features.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="sppf-spatial-pyramid-pooling-fast">
+  <div class="vc-header">
+    <span class="vc-num">14</span>
+    <span class="vc-term">SPPF (Spatial Pyramid Pooling Fast)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A module at the end of the backbone that applies max pooling three times with the same small kernel, then concatenates all results. Captures context at multiple effective scales without heavy computation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Input [20×20×512] → MaxPool(5×5) → MaxPool(5×5) → MaxPool(5×5) → concatenate all four → [20×20×2048] → 1×1 conv → [20×20×512]. Efficient multi-scale context at low cost.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="silu-activation">
+  <div class="vc-header">
+    <span class="vc-num">15</span>
+    <span class="vc-term">SiLU Activation</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Sigmoid Linear Unit — the activation function used in YOLOv8, defined as SiLU(x) = x × sigmoid(x). Smooth, non-monotonic, and outperforms ReLU on deep networks like YOLO backbones.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">SiLU(1.0)=0.731;  SiLU(−1.0)=−0.269;  SiLU(0)=0. Unlike ReLU which hard-clips at 0, SiLU allows small negative values, preserving gradient flow for negative activations.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="decoupled-head">
+  <div class="vc-header">
+    <span class="vc-num">16</span>
+    <span class="vc-term">Decoupled Head</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A prediction head where the classification task (what class?) and regression task (where is it?) have separate processing branches. YOLOv8 uses decoupled heads, improving accuracy over the coupled heads used in older versions.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Coupled (YOLOv5): one Conv branch → outputs class + box together. Decoupled (YOLOv8): Branch A → box [x,y,w,h]. Branch B → class probabilities [80 values]. Each branch specialises independently.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-3-detection-evaluation">
+  <h2>Part 3 — Detection & Evaluation</h2>
+</div>
+
+<div class="vocab-card" id="bounding-box">
+  <div class="vc-header">
+    <span class="vc-num">17</span>
+    <span class="vc-term">Bounding Box</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A rectangle described by four values [x, y, w, h] that locates a detected object in the image. x,y are the centre coordinates; w,h are width and height — all normalised relative to image size (0 to 1).</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Dog detected at: x=0.5 (image centre), y=0.6, w=0.3 (30% of width), h=0.4 (40% of height). On 640×640: centre at (320,384), box size 192×256 pixels.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="confidence-score">
+  <div class="vc-header">
+    <span class="vc-num">18</span>
+    <span class="vc-term">Confidence Score</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A value from 0 to 1 representing how certain the model is that a box contains an object of the predicted class. Boxes below a threshold (e.g. 0.25) are discarded as low-confidence detections.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">[car, confidence=0.92] → kept. [car, confidence=0.18] → discarded (below 0.25 threshold). Score comes from: objectness × class_probability = 0.97 × 0.95 = 0.92.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="iou-intersection-over-union">
+  <div class="vc-header">
+    <span class="vc-num">19</span>
+    <span class="vc-term">IoU (Intersection over Union)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A metric measuring how much two bounding boxes overlap. Computed as (area of overlap) ÷ (area of union). Used to judge whether a detection matches a ground-truth box. IoU > 0.5 is typically a correct detection.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Predicted box: 60px². Ground-truth: 80px². Overlap: 50px². Union: 60+80−50=90px². IoU = 50/90 = 0.556 > 0.5 → counted as a correct detection (true positive).</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="nms-non-maximum-suppression">
+  <div class="vc-header">
+    <span class="vc-num">20</span>
+    <span class="vc-term">NMS (Non-Maximum Suppression)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A post-processing step that removes duplicate detections. When multiple boxes detect the same object, NMS keeps the one with the highest confidence and removes all others that overlap it beyond an IoU threshold.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Three boxes for one car: [conf=0.95], [conf=0.88], [conf=0.72], all IoU > 0.5 with each other. NMS: keep 0.95 (highest), discard 0.88 and 0.72. Final output: 1 detection for the car.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="anchor-free-detection">
+  <div class="vc-header">
+    <span class="vc-num">21</span>
+    <span class="vc-term">Anchor-Free Detection</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">An approach (used in YOLOv8+) where the model directly predicts bounding box coordinates without relying on predefined anchor shapes. Simplifies training, eliminates anchor tuning, improves accuracy on varied shapes.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Anchor-based YOLOv5: predicts offsets [Δx,Δy,Δw,Δh] relative to fixed anchor (30×60). Anchor-free YOLOv8: directly predicts [cx=0.51, cy=0.62, w=0.28, h=0.41] — no preset anchor shapes needed.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="dfl-loss-distribution-focal-loss">
+  <div class="vc-header">
+    <span class="vc-num">22</span>
+    <span class="vc-term">DFL Loss (Distribution Focal Loss)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A loss function used in YOLOv8 for bounding box regression. Instead of predicting one coordinate value directly, it predicts a probability distribution over possible values, making boundary prediction more precise.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Classic: predict box right-edge=150px directly. DFL: predict distribution [p(140)=0.1, p(145)=0.2, p(150)=0.5, p(155)=0.2] → weighted average=150px. More stable for ambiguous object boundaries.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="tal-task-aligned-learning">
+  <div class="vc-header">
+    <span class="vc-num">23</span>
+    <span class="vc-term">TAL (Task-Aligned Learning)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">YOLOv8's training assignment strategy that determines which predicted boxes are matched to which ground-truth objects. Uses a combined score of classification confidence and box IoU to create better training targets.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Old strategy: assign by IoU alone. TAL: score = (class_prob)^α × (IoU)^β. Box with 0.8 class confidence and 0.75 IoU: score = 0.8×0.75=0.60. Better boxes are rewarded; ambiguous cases resolved more accurately.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── FONT CONTROLLER ──
+(function(){
+  const slider = document.getElementById('fc-slider');
+  const valLbl = document.getElementById('fc-val');
+  const MIN=10, MAX=64, DEFAULT=16;
+  function applySize(px){
+    document.documentElement.style.fontSize = px+'px';
+    valLbl.textContent = px+'px';
+    slider.style.setProperty('--pct', ((px-MIN)/(MAX-MIN)*100).toFixed(2)+'%');
+  }
+  slider.value = DEFAULT; applySize(DEFAULT);
+  slider.addEventListener('input', ()=>applySize(+slider.value));
+})();
+
+// ── SIDEBAR ──
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sidebar-btn');
+  const backdrop= document.getElementById('backdrop');
+
+  function open(){
+    sidebar.classList.add('open');
+    btn.classList.add('open');
+    document.body.classList.add('sb-open');
+    if(window.innerWidth < 1024) backdrop.style.display='block';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    btn.classList.remove('open');
+    document.body.classList.remove('sb-open');
+    backdrop.style.display='none';
+  }
+
+  btn.addEventListener('click', ()=> sidebar.classList.contains('open') ? close() : open());
+  backdrop.addEventListener('click', close);
+  if(window.innerWidth >= 1024) open();
+  window.addEventListener('resize', ()=>{ if(window.innerWidth >= 1024) backdrop.style.display='none'; });
+
+  // Active link highlighting
+  const links    = sidebar.querySelectorAll('a[href^="#"]');
+  const cards    = Array.from(document.querySelectorAll('.vocab-card[id]'));
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        links.forEach(a => a.classList.remove('active'));
+        const active = sidebar.querySelector(`a[href="#${e.target.id}"]`);
+        if(active){ active.classList.add('active'); active.scrollIntoView({block:'nearest'}); }
+      }
+    });
+  }, {rootMargin:'-10% 0px -80% 0px', threshold:0});
+
+  cards.forEach(c => obs.observe(c));
+
+  links.forEach(a => a.addEventListener('click', ()=>{
+    if(window.innerWidth < 1024) close();
+  }));
+})();
+</script>
+</body>
+</html>

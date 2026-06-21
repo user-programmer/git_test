@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Convolutional Neural Networks — Vocabulary Reference</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bg4:#21262d;
+  --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+  --accent:#58a6ff;--accent2:#bc8cff;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;}
+
+/* ── FONT CONTROLLER ── */
+#fc{
+  position:fixed;top:16px;right:16px;z-index:2000;
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);width:220px;
+}
+#fc label{white-space:nowrap;font-size:12px;color:var(--muted);}
+#fc-val{color:var(--accent);font-weight:700;min-width:36px;font-size:12px;}
+#fc-slider{
+  flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;
+  outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--accent) var(--pct,31.25%),var(--bg4) var(--pct,31.25%));
+}
+#fc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;}
+#fc-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+
+/* ── HAMBURGER BUTTON ── */
+#sidebar-btn{
+  position:fixed;top:16px;left:16px;z-index:1601;
+  background:rgba(28,35,51,.95);border:1px solid rgba(88,166,255,.3);
+  border-radius:8px;color:var(--accent);
+  width:44px;height:44px;cursor:pointer;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:background .2s;box-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+#sidebar-btn:hover{background:rgba(88,166,255,.15);}
+#sidebar-btn .bar{
+  display:block;width:20px;height:2px;background:currentColor;border-radius:2px;
+  transition:transform .25s,opacity .25s;
+}
+#sidebar-btn.open .bar:nth-child(1){transform:translateY(7px) rotate(45deg);}
+#sidebar-btn.open .bar:nth-child(2){opacity:0;}
+#sidebar-btn.open .bar:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:280px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:1500;
+  transform:translateX(-280px);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  padding:70px 0 40px;
+}
+#sidebar.open{transform:translateX(0);}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(88,166,255,.25);border-radius:4px;}
+.nav-part{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);padding:14px 18px 4px;font-weight:700;
+}
+#sidebar a{
+  display:flex;align-items:center;gap:10px;
+  padding:5px 18px;font-size:0.8rem;
+  color:var(--muted);text-decoration:none;
+  border-left:2px solid transparent;transition:all .2s;
+}
+#sidebar a:hover{color:var(--text);background:var(--bg3);}
+#sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(88,166,255,.06);}
+.nav-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:22px;height:22px;border-radius:4px;
+  background:var(--bg3);border:1px solid var(--border);
+  font-size:0.68rem;font-weight:700;color:var(--muted);flex-shrink:0;
+}
+#sidebar a.active .nav-num{background:rgba(88,166,255,.15);color:var(--accent);border-color:var(--accent);}
+
+/* ── BACKDROP ── */
+#backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1400;}
+
+/* ── RESPONSIVE ── */
+@media(min-width:1024px){
+  body.sb-open .container{margin-left:300px;}
+  .container{transition:margin-left .3s cubic-bezier(.4,0,.2,1);}
+}
+@media(max-width:599px){
+  #sidebar{width:85vw;}
+}
+
+/* ── LAYOUT ── */
+.container{max-width:860px;margin:0 auto;padding:80px 20px 60px;}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:20px 0 36px;}
+.hero h1{
+  font-size:2.2rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:6px;
+}
+.hero p{color:var(--muted);font-size:0.95rem;}
+.hero .pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px;}
+.pill{
+  display:inline-block;padding:3px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;
+  background:rgba(88,166,255,.12);color:var(--accent);border:1px solid rgba(88,166,255,.3);
+}
+
+/* ── SECTION BANNER ── */
+.section-banner{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border);border-radius:10px;
+  padding:14px 22px;margin:32px 0 16px;
+  border-left:4px solid var(--accent);
+}
+.section-banner h2{
+  font-size:1rem;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--accent);margin:0;
+}
+
+/* ── VOCAB CARD ── */
+.vocab-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  margin-bottom:14px;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+}
+.vocab-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent), 0 4px 20px rgba(0,0,0,.3);
+}
+.vc-header{
+  display:flex;align-items:center;gap:14px;
+  padding:12px 18px 10px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg3);
+}
+.vc-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:30px;height:30px;border-radius:6px;
+  background:rgba(88,166,255,.12);border:1px solid var(--accent);
+  font-size:0.78rem;font-weight:800;color:var(--accent);flex-shrink:0;
+}
+.vc-term{
+  font-size:1rem;font-weight:700;color:var(--accent);
+}
+.vc-body{padding:14px 18px 16px;display:flex;flex-direction:column;gap:12px;}
+.vc-row{display:flex;gap:12px;align-items:flex-start;}
+.row-label{
+  flex-shrink:0;min-width:88px;
+  font-size:0.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);padding-top:2px;
+}
+.ex-label{color:var(--accent2);}
+.row-text{font-size:0.88rem;color:var(--text);line-height:1.65;}
+.ex-row .row-text{
+  color:var(--muted);font-style:italic;
+  background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+  padding:8px 12px;font-style:normal;
+  border-left:3px solid var(--accent2);
+  font-family:'Courier New',monospace;font-size:0.82rem;
+}
+
+/* ── PRINT STYLES ── */
+@media print{
+  #fc,#sidebar-btn,#sidebar,#backdrop{display:none!important;}
+  body{background:#fff;color:#000;}
+  .container{margin:0;padding:20px;max-width:100%;}
+  .vocab-card{break-inside:avoid;border:1px solid #ccc;margin-bottom:10px;}
+  .vc-header{background:#f5f5f5;}
+  .vc-term{color:#1a1a6e;}
+  .section-banner{background:#eef;border-left:4px solid #339;}
+  .section-banner h2{color:#339;}
+  .row-text{color:#222;}
+  .ex-row .row-text{background:#f9f9f9;border-color:#ccc;color:#444;}
+}
+
+@media(max-width:600px){
+  .vc-header{flex-wrap:wrap;}
+  .vc-row{flex-direction:column;gap:4px;}
+  .row-label{min-width:unset;}
+  .hero h1{font-size:1.6rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- Font Controller -->
+<div id="fc">
+  <label>A</label>
+  <input id="fc-slider" type="range" min="10" max="64" step="1" value="16" style="--pct:31.25%"/>
+  <span id="fc-val">16px</span>
+</div>
+
+<!-- Hamburger -->
+<button id="sidebar-btn" aria-label="Toggle navigation" title="Toggle menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
+
+<div id="backdrop"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+<div class="nav-part">Part 1 — Dataset & Input</div>
+<a href="#dataset"><span class="nav-num">1</span>Dataset</a>
+<a href="#pixel-value"><span class="nav-num">2</span>Pixel Value</a>
+<a href="#preprocessing"><span class="nav-num">3</span>Preprocessing</a>
+<div class="nav-part">Part 2 — Convolutional Layers</div>
+<a href="#convolutional-layer"><span class="nav-num">4</span>Convolutional Layer</a>
+<a href="#filter-kernel"><span class="nav-num">5</span>Filter / Kernel</a>
+<a href="#feature-map-activation-map"><span class="nav-num">6</span>Feature Map (Activation Map)</a>
+<a href="#stride"><span class="nav-num">7</span>Stride</a>
+<a href="#padding"><span class="nav-num">8</span>Padding</a>
+<a href="#weight-sharing"><span class="nav-num">9</span>Weight Sharing</a>
+<div class="nav-part">Part 3 — Activation & Pooling</div>
+<a href="#relu-rectified-linear-unit"><span class="nav-num">10</span>ReLU (Rectified Linear Unit)</a>
+<a href="#max-pooling"><span class="nav-num">11</span>Max Pooling</a>
+<a href="#receptive-field"><span class="nav-num">12</span>Receptive Field</a>
+<div class="nav-part">Part 4 — Dense Layers & Output</div>
+<a href="#flatten-layer"><span class="nav-num">13</span>Flatten Layer</a>
+<a href="#dense-layer-fully-connected"><span class="nav-num">14</span>Dense Layer (Fully Connected)</a>
+<a href="#dropout"><span class="nav-num">15</span>Dropout</a>
+<a href="#overfitting"><span class="nav-num">16</span>Overfitting</a>
+<a href="#softmax-output"><span class="nav-num">17</span>Softmax Output</a>
+<div class="nav-part">Part 5 — Training</div>
+<a href="#loss-function"><span class="nav-num">18</span>Loss Function</a>
+<a href="#backpropagation"><span class="nav-num">19</span>Backpropagation</a>
+<a href="#batch-normalisation"><span class="nav-num">20</span>Batch Normalisation</a>
+<a href="#training-loop"><span class="nav-num">21</span>Training Loop</a>
+
+</nav>
+
+<!-- Content -->
+<div class="container">
+  <div class="hero">
+    <h1>Convolutional Neural Networks</h1>
+    <p>Vocabulary Reference — Architecture · Layers · Training</p>
+    <div class="pills">
+      <span class="pill">Vocabulary</span>
+      <span class="pill">Description</span>
+      <span class="pill">Example</span>
+      <span class="pill">Print Ready</span>
+    </div>
+  </div>
+
+
+<div class="section-banner" id="sec-part-1-dataset-input">
+  <h2>Part 1 — Dataset & Input</h2>
+</div>
+
+<div class="vocab-card" id="dataset">
+  <div class="vc-header">
+    <span class="vc-num">1</span>
+    <span class="vc-term">Dataset</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A collection of labelled examples used to train and evaluate a neural network. Divided into training set (to learn from), validation set (to tune hyperparameters), and test set (to measure final accuracy).</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">CIFAR-10: 60,000 colour images in 10 classes (cat, dog, car, plane…). 50,000 for training, 10,000 for testing. Each image is 32×32×3 = 3,072 input values.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="pixel-value">
+  <div class="vc-header">
+    <span class="vc-num">2</span>
+    <span class="vc-term">Pixel Value</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A single numeric value representing the brightness or colour intensity of one point in a digital image. In grayscale, one value per pixel (0–255). In RGB, three values per pixel — one each for Red, Green, and Blue.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Top-left pixel of a red strawberry: R=220, G=40, B=30. Normalised: R=0.863, G=0.157, B=0.118. These three values become three separate inputs to the CNN.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="preprocessing">
+  <div class="vc-header">
+    <span class="vc-num">3</span>
+    <span class="vc-term">Preprocessing</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Steps applied to raw data before feeding it to the network: normalising pixel values to 0–1, resizing images to a fixed size, converting to the right format, and optionally augmenting (flipping, rotating) for variety.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Raw JPEG (variable size, uint8 0–255) → resize to 224×224 → divide by 255 → float32 tensor [224,224,3] → ready to enter the CNN.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-2-convolutional-layers">
+  <h2>Part 2 — Convolutional Layers</h2>
+</div>
+
+<div class="vocab-card" id="convolutional-layer">
+  <div class="vc-header">
+    <span class="vc-num">4</span>
+    <span class="vc-term">Convolutional Layer</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The core layer of a CNN. A small filter (e.g. 3×3) slides across the input at every position, computing a dot product at each step. This produces a Feature Map highlighting where the filter's pattern appears.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">A 3×3 edge filter slides over a 6×6 image. At each of 16 positions (stride 1, no padding) it computes one value, producing a 4×4 feature map showing where edges were found.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="filter-kernel">
+  <div class="vc-header">
+    <span class="vc-num">5</span>
+    <span class="vc-term">Filter / Kernel</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A small grid of learnable weights (e.g. 3×3 or 5×5) that slides across the input looking for one specific pattern. Multiple filters in the same layer each detect a different feature — edges, corners, textures.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Horizontal-edge filter: [[−1,−1,−1],[0,0,0],[1,1,1]]. Placed over a dark-to-bright boundary, the dot product gives a large positive value, detecting the horizontal edge.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="feature-map-activation-map">
+  <div class="vc-header">
+    <span class="vc-num">6</span>
+    <span class="vc-term">Feature Map (Activation Map)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The 2D output produced by applying one filter to the entire input. Each value represents how strongly that filter's pattern was present at that spatial location. Multiple filters produce multiple feature maps.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Applying 32 different 3×3 filters to a 32×32×3 input produces 32 feature maps of size 30×30, a combined output of shape [30×30×32] — 32 detected patterns across the image.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="stride">
+  <div class="vc-header">
+    <span class="vc-num">7</span>
+    <span class="vc-term">Stride</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The number of pixels the filter moves per step as it slides across the input. Stride 1 moves one pixel at a time (large output). Stride 2 skips every other position, halving the output size and reducing computation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">3×3 filter on 6×6 input: stride=1 → 4×4 output (16 positions). stride=2 → 2×2 output (4 positions). Larger stride = faster computation but coarser feature map.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="padding">
+  <div class="vc-header">
+    <span class="vc-num">8</span>
+    <span class="vc-term">Padding</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Adding rows/columns of zeros around the input border before convolution. "Valid" padding: no zeros, output shrinks. "Same" padding: zeros added so output stays the same spatial size as the input.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">3×3 filter on 6×6 input, no padding → 4×4 output. With same padding (1 zero border each side) → 6×6 output. Padding preserves spatial dimensions through convolution.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="weight-sharing">
+  <div class="vc-header">
+    <span class="vc-num">9</span>
+    <span class="vc-term">Weight Sharing</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">In a CNN the same filter weights are reused at every spatial position across the image. This means a pattern detector learned in one location automatically detects that pattern everywhere in the image.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">A 3×3 filter with 9 weights detects horizontal edges anywhere in a 224×224 image. Without weight sharing, you would need unique weights for each of 224×224=50,176 positions.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-3-activation-pooling">
+  <h2>Part 3 — Activation & Pooling</h2>
+</div>
+
+<div class="vocab-card" id="relu-rectified-linear-unit">
+  <div class="vc-header">
+    <span class="vc-num">10</span>
+    <span class="vc-term">ReLU (Rectified Linear Unit)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The activation function applied after each convolution. Replaces any negative value with zero and keeps positive values unchanged: f(z)=max(0,z). Introduces non-linearity and prevents vanishing gradients.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Feature map values [−0.5, 1.2, −0.3, 0.8] after ReLU → [0, 1.2, 0, 0.8]. Negative "non-activations" are silenced; only positive detections pass forward.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="max-pooling">
+  <div class="vc-header">
+    <span class="vc-num">11</span>
+    <span class="vc-term">Max Pooling</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A down-sampling operation that divides the feature map into small regions and keeps only the maximum value from each. Reduces spatial size, makes the network robust to small shifts/translations, and reduces computation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">2×2 max pool (stride 2) on [[1,3,2,4],[5,6,7,8],[9,2,3,1],[4,6,2,8]]: top-left max=6, top-right=8, bottom-left=9, bottom-right=8 → output [[6,8],[9,8]]. Size halved from 4×4 to 2×2.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="receptive-field">
+  <div class="vc-header">
+    <span class="vc-num">12</span>
+    <span class="vc-term">Receptive Field</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The region of the original input image that influences a particular neuron's output. Early layers have small receptive fields (see fine details). Deeper layers have large receptive fields (see large patterns or whole objects).</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Layer 1 neurons see a 3×3 input region (detect edges). Layer 3 neurons see a 9×9 region (detect textures). Layer 6 neurons may see 32×32 region (detect object parts like ears or wheels).</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-4-dense-layers-output">
+  <h2>Part 4 — Dense Layers & Output</h2>
+</div>
+
+<div class="vocab-card" id="flatten-layer">
+  <div class="vc-header">
+    <span class="vc-num">13</span>
+    <span class="vc-term">Flatten Layer</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Converts the 3D output of the last convolutional/pooling layer (height × width × channels) into a 1D vector. Required before feeding into fully-connected Dense layers.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Last pooling output shape: 4×4×64 = 1,024 values. Flatten converts this to a vector [v₁, v₂, ..., v₁₀₂₄] that a Dense layer can accept.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="dense-layer-fully-connected">
+  <div class="vc-header">
+    <span class="vc-num">14</span>
+    <span class="vc-term">Dense Layer (Fully Connected)</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A layer where every neuron connects to every neuron in the previous layer. It combines all detected features to make the final classification decision. Typically placed after the convolutional layers.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Flattened vector of 1,024 values feeds into a Dense layer of 256 neurons. Each of 256 neurons has 1,024 weights → 256×1,024=262,144 parameters just for this one layer.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="dropout">
+  <div class="vc-header">
+    <span class="vc-num">15</span>
+    <span class="vc-term">Dropout</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">A regularisation technique that randomly sets a fraction of neurons to zero during training (e.g. 50% chance each). Forces the network not to rely on any single neuron, reducing overfitting and improving generalisation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Before dropout: [0.8, 0.5, 0.3, 0.9, 0.2]. With Dropout(0.5): [0, 0.5, 0, 0.9, 0] — two neurons randomly silenced. At test time, dropout is turned off and all neurons are active.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="overfitting">
+  <div class="vc-header">
+    <span class="vc-num">16</span>
+    <span class="vc-term">Overfitting</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">When a model learns the training data too specifically — including noise — and performs poorly on new unseen data. Signs: training accuracy 99%, test accuracy 65%. Prevented by dropout, regularisation, and more data.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">CNN trained on 100 cat images with no dropout: 99% training accuracy but only 60% on new photos. Adding Dropout(0.5) improves test accuracy to 85%.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="softmax-output">
+  <div class="vc-header">
+    <span class="vc-num">17</span>
+    <span class="vc-term">Softmax Output</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The final layer activation for multi-class CNNs. Converts raw scores into class probabilities that sum to 1. The class with the highest probability is the prediction.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">CIFAR-10 raw scores [1.2, 0.3, 3.7, ...] → Softmax → [0.04, 0.02, 0.55, ...]. Class 3 (bird) has 55% probability and is chosen as the prediction.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section-banner" id="sec-part-5-training">
+  <h2>Part 5 — Training</h2>
+</div>
+
+<div class="vocab-card" id="loss-function">
+  <div class="vc-header">
+    <span class="vc-num">18</span>
+    <span class="vc-term">Loss Function</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Measures how wrong the CNN's predictions are. Minimised during training. Categorical Cross-Entropy is standard for multi-class problems; Binary Cross-Entropy for two-class problems.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">True class: cat (index 3). CNN output: [0.02,0.01,0.01,0.85,0.02,...]. Loss = −log(0.85) = 0.163. If it predicted 0.20 for cat: loss = −log(0.20) = 1.61 — much higher.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="backpropagation">
+  <div class="vc-header">
+    <span class="vc-num">19</span>
+    <span class="vc-term">Backpropagation</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The algorithm that computes gradients for every weight in the CNN by applying the chain rule from output back to input. Each filter's weights are nudged to reduce the loss after every mini-batch.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Loss=0.54. Backprop flows: output layer → Dense → Flatten → Pool → Conv3 → Conv2 → Conv1. Each filter's 9 weights get their own gradient and update step.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="batch-normalisation">
+  <div class="vc-header">
+    <span class="vc-num">20</span>
+    <span class="vc-term">Batch Normalisation</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">Applied after a layer to normalise outputs to mean≈0 and variance≈1 within each mini-batch. Stabilises training, allows higher learning rates, and acts as mild regularisation.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Conv layer outputs: [−5.2, 0.3, 12.1, −0.8]. After Batch Norm: [−0.7, 0.1, 1.4, −0.2]. Prevents later layers from seeing wildly varying input scales across batches.</p>
+    </div>
+  </div>
+</div>
+
+<div class="vocab-card" id="training-loop">
+  <div class="vc-header">
+    <span class="vc-num">21</span>
+    <span class="vc-term">Training Loop</span>
+  </div>
+  <div class="vc-body">
+    <div class="vc-row desc-row">
+      <span class="row-label">Description</span>
+      <p class="row-text">The repeated cycle: (1) Forward pass → predict. (2) Compute loss. (3) Backward pass → compute gradients. (4) Update weights. Repeats for every mini-batch, for many epochs, until the model converges.</p>
+    </div>
+    <div class="vc-row ex-row">
+      <span class="row-label ex-label">Example</span>
+      <p class="row-text">Epoch 1: loss=2.1, accuracy=12%. Epoch 10: loss=1.4, accuracy=48%. Epoch 50: loss=0.6, accuracy=80%. Epoch 100: loss=0.3, accuracy=92%. Loop runs until improvement plateaus.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── FONT CONTROLLER ──
+(function(){
+  const slider = document.getElementById('fc-slider');
+  const valLbl = document.getElementById('fc-val');
+  const MIN=10, MAX=64, DEFAULT=16;
+  function applySize(px){
+    document.documentElement.style.fontSize = px+'px';
+    valLbl.textContent = px+'px';
+    slider.style.setProperty('--pct', ((px-MIN)/(MAX-MIN)*100).toFixed(2)+'%');
+  }
+  slider.value = DEFAULT; applySize(DEFAULT);
+  slider.addEventListener('input', ()=>applySize(+slider.value));
+})();
+
+// ── SIDEBAR ──
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sidebar-btn');
+  const backdrop= document.getElementById('backdrop');
+
+  function open(){
+    sidebar.classList.add('open');
+    btn.classList.add('open');
+    document.body.classList.add('sb-open');
+    if(window.innerWidth < 1024) backdrop.style.display='block';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    btn.classList.remove('open');
+    document.body.classList.remove('sb-open');
+    backdrop.style.display='none';
+  }
+
+  btn.addEventListener('click', ()=> sidebar.classList.contains('open') ? close() : open());
+  backdrop.addEventListener('click', close);
+  if(window.innerWidth >= 1024) open();
+  window.addEventListener('resize', ()=>{ if(window.innerWidth >= 1024) backdrop.style.display='none'; });
+
+  // Active link highlighting
+  const links    = sidebar.querySelectorAll('a[href^="#"]');
+  const cards    = Array.from(document.querySelectorAll('.vocab-card[id]'));
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        links.forEach(a => a.classList.remove('active'));
+        const active = sidebar.querySelector(`a[href="#${e.target.id}"]`);
+        if(active){ active.classList.add('active'); active.scrollIntoView({block:'nearest'}); }
+      }
+    });
+  }, {rootMargin:'-10% 0px -80% 0px', threshold:0});
+
+  cards.forEach(c => obs.observe(c));
+
+  links.forEach(a => a.addEventListener('click', ()=>{
+    if(window.innerWidth < 1024) close();
+  }));
+})();
+</script>
+</body>
+</html>
