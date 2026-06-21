@@ -22,26 +22,17 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html {
+    font-size: 16px;
+    transition: font-size 0.25s ease;
+  }
+
   body {
     background: var(--dark);
     color: var(--text);
     font-family: 'Segoe UI', system-ui, sans-serif;
     line-height: 1.7;
-    font-size: 16px;
-  }
-
-  /* ── SCALABLE CONTENT COMPONENTS ONLY ── */
-  p, td, li,
-  .callout-text,
-  .section-header p,
-  .highlight,
-  .pipe-sub,
-  .toc a,
-  .prob-label,
-  .epoch-label, .epoch-val,
-  .summary-box p {
-    font-size: var(--fs, 16px);
-    transition: font-size 0.25s ease;
+    font-size: 1rem;
   }
 
   /* ── FONT CONTROLLER ── */
@@ -64,13 +55,13 @@
   }
   #font-ctrl:hover { opacity: 1 !important; }
   #font-ctrl .fc-icon {
-    font-size: 1rem;
+    font-size: 15px;
     color: #90a8ff;
     flex-shrink: 0;
     user-select: none;
   }
   #font-ctrl .fc-label {
-    font-size: 0.72rem;
+    font-size: 11px;
     color: var(--muted);
     white-space: nowrap;
     flex-shrink: 0;
@@ -78,7 +69,7 @@
     text-transform: uppercase;
   }
   #font-ctrl .fc-value {
-    font-size: 0.85rem;
+    font-size: 13px;
     font-weight: 800;
     color: #90a8ff;
     min-width: 34px;
@@ -127,7 +118,7 @@
     border: 1px solid rgba(67,97,238,0.35);
     border-radius: 8px;
     color: var(--muted);
-    font-size: 0.7rem;
+    font-size: 11px;
     padding: 3px 8px;
     cursor: pointer;
     flex-shrink: 0;
@@ -1545,8 +1536,8 @@
   const root     = document.documentElement;
 
   function applySize(px) {
-    // only content components scale via --fs, headings/badges/code stay fixed
-    root.style.setProperty('--fs', px + 'px');
+    // change root font-size so all rem units across the page scale together
+    root.style.fontSize = px + 'px';
     valLbl.textContent = px + 'px';
     const pct = ((px - MIN) / (MAX - MIN) * 100).toFixed(2) + '%';
     slider.style.setProperty('--pct', pct);
