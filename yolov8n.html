@@ -3,1045 +3,1479 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YOLOv8n — Fundamentals & Architecture</title>
+<title>YOLO &amp; YOLOv8n Explained</title>
 <style>
-:root {
-  --blue:   #4361ee;
-  --purple: #7209b7;
-  --pink:   #f72585;
-  --green:  #06d6a0;
-  --orange: #fb8500;
-  --yellow: #ffb703;
-  --red:    #ef233c;
-  --cyan:   #00b4d8;
-  --dark:   #0d1117;
-  --card:   #161b22;
-  --border: #30363d;
-  --text:   #e6edf3;
-  --muted:  #8b949e;
-}
-html { font-size: 16px; transition: font-size 0.25s ease; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--dark); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; font-size: 1rem; }
+  :root {
+    --blue:    #4361ee;
+    --purple:  #7209b7;
+    --pink:    #f72585;
+    --green:   #06d6a0;
+    --orange:  #fb8500;
+    --yellow:  #ffb703;
+    --red:     #ef233c;
+    --dark:    #0d1117;
+    --card:    #161b22;
+    --border:  #30363d;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+  }
 
-/* ── HERO ── */
-.hero { background: linear-gradient(135deg,#0d1117 0%,#0a1628 50%,#0d1117 100%); text-align:center; padding:60px 20px 80px; border-bottom:1px solid var(--border); position:relative; overflow:hidden; }
-.hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(67,97,238,.18) 0%,transparent 70%); }
-.hero h1 { font-size:clamp(2rem,6vw,3.6rem); font-weight:800; background:linear-gradient(90deg,var(--cyan),var(--blue),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; position:relative; }
-.hero p { color:var(--muted); font-size:clamp(1rem,2.5vw,1.2rem); margin-top:14px; position:relative; }
-.badges { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:24px; position:relative; }
-.badge { padding:6px 16px; border-radius:20px; font-size:.85rem; font-weight:600; }
-.badge-blue   { background:rgba(67,97,238,.2);  color:#90a8ff; border:1px solid rgba(67,97,238,.4); }
-.badge-green  { background:rgba(6,214,160,.2);  color:#70f0c8; border:1px solid rgba(6,214,160,.4); }
-.badge-orange { background:rgba(251,133,0,.2);  color:#ffc060; border:1px solid rgba(251,133,0,.4); }
-.badge-pink   { background:rgba(247,37,133,.2); color:#ff80b0; border:1px solid rgba(247,37,133,.4); }
-.badge-cyan   { background:rgba(0,180,216,.2);  color:#70d8f0; border:1px solid rgba(0,180,216,.4); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── PART BANNER ── */
-.part-banner { padding:24px 30px; margin:0; display:flex; align-items:center; gap:18px; border-bottom:1px solid var(--border); }
-.part-num { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.4rem; flex-shrink:0; }
-.part-banner h2 { font-size:clamp(1.3rem,3vw,1.9rem); font-weight:800; }
-.part-banner p  { color:var(--muted); font-size:.9rem; margin-top:2px; }
+  html {
+    font-size: 16px;
+    transition: font-size 0.25s ease;
+  }
 
-/* ── LAYOUT ── */
-.container { max-width:980px; margin:0 auto; padding:0 20px; transition:margin-left .3s cubic-bezier(.4,0,.2,1); }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.7;
+    font-size: 1rem;
+  }
 
-/* ── SECTION ── */
-.section { padding:50px 0; border-bottom:1px solid var(--border); }
-.section-header { display:flex; align-items:center; gap:14px; margin-bottom:32px; }
-.step-num { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; flex-shrink:0; }
-.section-header h2 { font-size:clamp(1.2rem,3vw,1.7rem); font-weight:700; }
-.section-header p { color:var(--muted); font-size:.9rem; margin-top:2px; }
+  /* -- FONT CONTROLLER -- */
+  #font-ctrl {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    z-index: 9999;
+    background: #1c2333;
+    border: 1px solid rgba(67,97,238,0.45);
+    border-radius: 16px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(67,97,238,0.1);
+    backdrop-filter: blur(10px);
+    min-width: 240px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #font-ctrl:hover { opacity: 1 !important; }
+  #font-ctrl .fc-icon {
+    font-size: 15px;
+    color: #90a8ff;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  #font-ctrl .fc-label {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  #font-ctrl .fc-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #90a8ff;
+    min-width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  #font-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 5px;
+    border-radius: 10px;
+    background: linear-gradient(
+      90deg,
+      #4361ee var(--pct, 18.75%),
+      rgba(255,255,255,0.1) var(--pct, 18.75%)
+    );
+    outline: none;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  #font-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #4361ee;
+    border: 3px solid #e6edf3;
+    box-shadow: 0 2px 8px rgba(67,97,238,0.6);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #font-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 16px rgba(67,97,238,0.9);
+  }
+  #font-slider::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #4361ee;
+    border: 3px solid #e6edf3;
+    box-shadow: 0 2px 8px rgba(67,97,238,0.6);
+    cursor: pointer;
+  }
+  #fc-reset {
+    background: none;
+    border: 1px solid rgba(67,97,238,0.35);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 3px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  #fc-reset:hover {
+    background: rgba(67,97,238,0.15);
+    color: #90a8ff;
+    border-color: rgba(67,97,238,0.6);
+  }
+  @media(max-width:480px) {
+    #font-ctrl {
+      top: 10px; right: 10px; left: 10px;
+      min-width: unset;
+    }
+  }
 
-/* ── CARD ── */
-.card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
-.card h3 { font-size:1rem; font-weight:700; margin-bottom:14px; }
+  /* -- HERO -- */
+  .hero {
+    background: linear-gradient(135deg, #0d1117 0%, #161b44 50%, #1a0a2e 100%);
+    text-align: center;
+    padding: 60px 20px 80px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(67,97,238,0.15) 0%, transparent 70%);
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 6vw, 3.8rem);
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--blue), var(--pink), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    margin-top: 14px;
+    position: relative;
+  }
+  .badges {
+    display: flex; gap: 10px; justify-content: center;
+    flex-wrap: wrap; margin-top: 24px; position: relative;
+  }
+  .badge {
+    padding: 6px 16px; border-radius: 20px;
+    font-size: 0.85rem; font-weight: 600;
+  }
+  .badge-blue   { background: rgba(67,97,238,0.2);  color: #90a8ff; border: 1px solid rgba(67,97,238,0.4); }
+  .badge-green  { background: rgba(6,214,160,0.2);  color: #70f0c8; border: 1px solid rgba(6,214,160,0.4); }
+  .badge-orange { background: rgba(251,133,0,0.2);  color: #ffc060; border: 1px solid rgba(251,133,0,0.4); }
 
-/* ── GRID ── */
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-@media(max-width:640px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+  /* -- LAYOUT -- */
+  .container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
 
-/* ── HIGHLIGHT ── */
-.highlight { border-radius:10px; padding:18px 20px; margin:16px 0; border-left:4px solid; }
-.hl-blue   { background:rgba(67,97,238,.08);  border-color:var(--blue); }
-.hl-green  { background:rgba(6,214,160,.08);  border-color:var(--green); }
-.hl-orange { background:rgba(251,133,0,.08);  border-color:var(--orange); }
-.hl-pink   { background:rgba(247,37,133,.08); border-color:var(--pink); }
-.hl-purple { background:rgba(114,9,183,.12);  border-color:var(--purple); }
-.hl-yellow { background:rgba(255,183,3,.08);  border-color:var(--yellow); }
-.hl-cyan   { background:rgba(0,180,216,.08);  border-color:var(--cyan); }
-.hl-red    { background:rgba(239,35,60,.08);  border-color:var(--red); }
+  /* -- SECTION -- */
+  .section {
+    padding: 50px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 32px;
+  }
+  .step-num {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem; flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: clamp(1.3rem, 3vw, 1.8rem);
+    font-weight: 700;
+  }
+  .section-header p {
+    color: var(--muted); font-size: 0.9rem; margin-top: 2px;
+  }
 
-/* ── CODE ── */
-.code { background:#0d1117; border:1px solid var(--border); border-radius:8px; padding:16px; font-family:'Cascadia Code','Fira Code',monospace; font-size:.82rem; overflow-x:auto; line-height:1.8; white-space:pre; }
-.c-g{color:#06d6a0} .c-b{color:#79b8ff} .c-y{color:#ffb703} .c-p{color:#f97583} .c-o{color:#ffab70} .c-m{color:#8b949e} .c-w{color:#e6edf3} .c-c{color:#70d8f0}
+  /* -- CARD -- */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card h3 {
+    font-size: 1rem; font-weight: 700;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
 
-/* ── TABLE ── */
-table { width:100%; border-collapse:collapse; font-size:.9rem; }
-th { background:rgba(67,97,238,.15); color:#90a8ff; padding:10px 14px; text-align:left; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border); }
-td { padding:10px 14px; border-bottom:1px solid rgba(48,54,61,.5); vertical-align:top; }
-tr:last-child td { border-bottom:none; }
-tr:hover td { background:rgba(255,255,255,.02); }
+  /* -- GRID -- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  @media(max-width:640px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
 
-/* ── PILL ── */
-.pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:.78rem; font-weight:600; }
-.pill-blue   { background:rgba(67,97,238,.2);  color:#90a8ff; }
-.pill-green  { background:rgba(6,214,160,.2);  color:#70f0c8; }
-.pill-orange { background:rgba(251,133,0,.2);  color:#ffc060; }
-.pill-pink   { background:rgba(247,37,133,.2); color:#ff80b0; }
-.pill-purple { background:rgba(114,9,183,.2);  color:#c890ff; }
-.pill-red    { background:rgba(239,35,60,.2);  color:#ff8090; }
-.pill-cyan   { background:rgba(0,180,216,.2);  color:#70d8f0; }
-.pill-yellow { background:rgba(255,183,3,.2);  color:#ffd060; }
+  /* -- HIGHLIGHT BOX -- */
+  .highlight {
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 16px 0;
+    border-left: 4px solid;
+  }
+  .hl-blue   { background: rgba(67,97,238,0.08);  border-color: var(--blue);   }
+  .hl-green  { background: rgba(6,214,160,0.08);  border-color: var(--green);  }
+  .hl-orange { background: rgba(251,133,0,0.08);  border-color: var(--orange); }
+  .hl-pink   { background: rgba(247,37,133,0.08); border-color: var(--pink);   }
+  .hl-purple { background: rgba(114,9,183,0.12);  border-color: var(--purple); }
+  .hl-yellow { background: rgba(255,183,3,0.08);  border-color: var(--yellow); }
+  .hl-red    { background: rgba(239,35,60,0.08);  border-color: var(--red);    }
 
-/* ── PIPELINE ── */
-.pipeline { display:flex; flex-direction:column; align-items:center; gap:0; }
-.pipe-box { width:100%; max-width:500px; border-radius:10px; padding:14px 20px; text-align:center; font-weight:600; font-size:.95rem; }
-.pipe-arrow { width:2px; height:26px; background:var(--border); position:relative; }
-.pipe-arrow::after { content:'▼'; position:absolute; bottom:-6px; left:50%; transform:translateX(-50%); font-size:.65rem; color:var(--muted); }
-.pipe-sub { font-size:.78rem; font-weight:400; opacity:.8; margin-top:3px; }
+  /* -- CODE BLOCK -- */
+  .code {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Cascadia Code','Fira Code',monospace;
+    font-size: 0.82rem;
+    overflow-x: auto;
+    line-height: 1.8;
+    white-space: pre;
+  }
+  .code .c-green  { color: #06d6a0; }
+  .code .c-blue   { color: #79b8ff; }
+  .code .c-yellow { color: #ffb703; }
+  .code .c-pink   { color: #f97583; }
+  .code .c-orange { color: #ffab70; }
+  .code .c-muted  { color: #8b949e; }
+  .code .c-white  { color: #e6edf3; }
 
-/* ── FORMULA ── */
-.formula { background:rgba(67,97,238,.06); border:1px solid rgba(67,97,238,.2); border-radius:8px; padding:14px 18px; font-family:'Cascadia Code','Fira Code',monospace; font-size:.88rem; margin:12px 0; text-align:center; color:#90a8ff; }
+  /* -- TABLE -- */
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  th {
+    background: rgba(67,97,238,0.15);
+    color: #90a8ff;
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
 
-/* ── BAR ── */
-.bar-row { margin:8px 0; }
-.bar-label { display:flex; justify-content:space-between; font-size:.85rem; margin-bottom:4px; }
-.bar-bg { height:10px; border-radius:10px; background:rgba(255,255,255,.06); overflow:hidden; }
-.bar-fill { height:100%; border-radius:10px; }
+  /* -- PILL -- */
+  .pill {
+    display: inline-block;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .pill-blue   { background: rgba(67,97,238,0.2);  color: #90a8ff; }
+  .pill-green  { background: rgba(6,214,160,0.2);  color: #70f0c8; }
+  .pill-orange { background: rgba(251,133,0,0.2);  color: #ffc060; }
+  .pill-pink   { background: rgba(247,37,133,0.2); color: #ff80b0; }
+  .pill-purple { background: rgba(114,9,183,0.2);  color: #c890ff; }
+  .pill-red    { background: rgba(239,35,60,0.2);  color: #ff8090; }
+  .pill-yellow { background: rgba(255,183,3,0.2);  color: #ffd060; }
 
-/* ── CALLOUT ── */
-.callout { display:flex; gap:14px; align-items:flex-start; background:rgba(6,214,160,.06); border:1px solid rgba(6,214,160,.2); border-radius:10px; padding:16px 18px; margin:16px 0; }
-.callout-icon { font-size:1.4rem; flex-shrink:0; }
-.callout-text { font-size:.9rem; color:#c0f0e4; }
-.callout-text strong { color:var(--green); }
+  /* -- PIPELINE -- */
+  .pipeline {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0;
+  }
+  .pipe-box {
+    width: 100%; max-width: 460px;
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    position: relative;
+  }
+  .pipe-arrow {
+    width: 2px; height: 28px;
+    background: var(--border);
+    position: relative;
+  }
+  .pipe-arrow::after {
+    content: '\25BC';
+    position: absolute;
+    bottom: -6px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .pipe-sub {
+    font-size: 0.78rem;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-top: 3px;
+  }
 
-/* ── SUMMARY BOX ── */
-.summary-box { background:linear-gradient(135deg,rgba(0,180,216,.08),rgba(67,97,238,.1)); border:1px solid rgba(67,97,238,.3); border-radius:14px; padding:30px; text-align:center; margin-top:40px; }
-.summary-box p { font-size:clamp(1rem,2.5vw,1.15rem); line-height:1.8; color:#cdd9ff; }
+  /* -- FILTER VISUAL -- */
+  .filter-grid {
+    display: grid;
+    gap: 3px;
+    width: fit-content;
+  }
+  .filter-cell {
+    width: 44px; height: 44px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem;
+  }
 
-/* ── SIDEBAR ── */
-#sidebar { position:fixed; top:0; left:0; height:100vh; width:280px; background:#0e1117; border-right:1px solid rgba(67,97,238,.25); z-index:8000; display:flex; flex-direction:column; transform:translateX(-280px); transition:transform .3s cubic-bezier(.4,0,.2,1); box-shadow:4px 0 24px rgba(0,0,0,.5); }
-#sidebar.open { transform:translateX(0); }
-#sidebar-head { display:flex; align-items:center; justify-content:space-between; padding:18px 18px 12px; border-bottom:1px solid rgba(67,97,238,.2); flex-shrink:0; }
-#sidebar-head span { font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#90a8ff; }
-#sidebar-close { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:2px 6px; border-radius:6px; transition:background .15s,color .15s; }
-#sidebar-close:hover { background:rgba(255,255,255,.07); color:var(--text); }
-#sidebar-nav { overflow-y:auto; flex:1; padding:8px 8px 20px; scrollbar-width:thin; scrollbar-color:rgba(67,97,238,.3) transparent; }
-#sidebar-nav::-webkit-scrollbar { width:4px; }
-#sidebar-nav::-webkit-scrollbar-thumb { background:rgba(67,97,238,.3); border-radius:4px; }
-.nav-part { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); padding:10px 12px 4px; }
-.nav-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; text-decoration:none; color:var(--muted); font-size:12.5px; transition:background .15s,color .15s; margin-bottom:2px; line-height:1.4; }
-.nav-item:hover { background:rgba(67,97,238,.1); color:var(--text); }
-.nav-item.active { background:rgba(67,97,238,.18); color:#90a8ff; border-left:3px solid #4361ee; padding-left:9px; }
-.nav-num { display:flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,.05); font-size:10px; font-weight:700; flex-shrink:0; color:var(--muted); }
-.nav-item.active .nav-num { background:rgba(67,97,238,.3); color:#90a8ff; }
-#sidebar-btn { position:fixed; top:50%; left:0; transform:translateY(-50%); z-index:7999; background:#1c2333; border:1px solid rgba(67,97,238,.4); border-left:none; border-radius:0 10px 10px 0; color:#90a8ff; padding:14px 8px; cursor:pointer; writing-mode:vertical-rl; font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; transition:background .15s,left .3s cubic-bezier(.4,0,.2,1); box-shadow:2px 0 12px rgba(0,0,0,.4); }
-#sidebar-btn:hover { background:rgba(67,97,238,.15); }
-#sidebar-btn.shifted { left:280px; }
-#sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:7998; backdrop-filter:blur(2px); }
-@media(min-width:900px){
-  body.sb-open .container { margin-left:300px; }
-  body.sb-open .hero,body.sb-open .part-banner { padding-left:310px; }
-  .hero,.part-banner { transition:padding-left .3s cubic-bezier(.4,0,.2,1); }
-}
-@media(max-width:899px){ #sidebar-overlay.show { display:block; } }
+  /* -- NEURON -- */
+  .neuron-row {
+    display: flex; gap: 10px;
+    flex-wrap: wrap; align-items: center;
+    margin: 8px 0;
+  }
+  .neuron {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700;
+  }
 
-/* ── FONT CONTROLLER ── */
-#font-ctrl { position:fixed; top:16px; right:24px; z-index:9999; background:#1c2333; border:1px solid rgba(67,97,238,.45); border-radius:16px; padding:12px 18px; display:flex; align-items:center; gap:12px; box-shadow:0 8px 32px rgba(0,0,0,.55); backdrop-filter:blur(10px); min-width:240px; transition:opacity .2s; }
-#font-ctrl:hover { opacity:1 !important; }
-#font-ctrl .fc-icon { font-size:15px; color:#90a8ff; flex-shrink:0; user-select:none; }
-#font-ctrl .fc-label { font-size:11px; color:var(--muted); white-space:nowrap; flex-shrink:0; letter-spacing:.04em; text-transform:uppercase; }
-#font-ctrl .fc-value { font-size:13px; font-weight:800; color:#90a8ff; min-width:34px; text-align:right; flex-shrink:0; }
-#font-slider { -webkit-appearance:none; appearance:none; flex:1; height:5px; border-radius:10px; background:linear-gradient(90deg,#4361ee var(--pct,18.75%),rgba(255,255,255,.1) var(--pct,18.75%)); outline:none; cursor:pointer; }
-#font-slider::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#4361ee; border:3px solid #e6edf3; box-shadow:0 2px 8px rgba(67,97,238,.6); cursor:pointer; transition:transform .15s; }
-#font-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
-#font-slider::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#4361ee; border:3px solid #e6edf3; cursor:pointer; }
-#fc-reset { background:none; border:1px solid rgba(67,97,238,.35); border-radius:8px; color:var(--muted); font-size:11px; padding:3px 8px; cursor:pointer; flex-shrink:0; transition:all .15s; white-space:nowrap; }
-#fc-reset:hover { background:rgba(67,97,238,.15); color:#90a8ff; }
-@media(max-width:480px){
-  #font-ctrl { top:10px; right:10px; left:10px; min-width:unset; }
-  .section { padding:36px 0; }
-  .card { padding:16px; }
-  table { font-size:.8rem; }
-  th,td { padding:8px 10px; }
-}
+  /* -- PROGRESS BAR -- */
+  .prob-row { margin: 8px 0; }
+  .prob-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.85rem; margin-bottom: 4px;
+  }
+  .prob-bar-bg {
+    height: 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+  .prob-bar { height: 100%; border-radius: 10px; }
+
+  /* -- EPOCH -- */
+  .epoch-row {
+    display: flex; align-items: center; gap: 14px;
+    margin: 10px 0;
+  }
+  .epoch-label { width: 80px; font-size: 0.82rem; color: var(--muted); flex-shrink: 0; }
+  .epoch-bar-bg {
+    flex: 1; height: 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.06); overflow: hidden;
+  }
+  .epoch-bar { height: 100%; border-radius: 10px; }
+  .epoch-val { width: 40px; font-size: 0.82rem; font-weight: 700; text-align: right; }
+
+  /* -- FORMULA -- */
+  .formula {
+    background: rgba(67,97,238,0.06);
+    border: 1px solid rgba(67,97,238,0.2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Cascadia Code','Fira Code',monospace;
+    font-size: 0.88rem;
+    margin: 12px 0;
+    text-align: center;
+    color: #90a8ff;
+  }
+
+  /* -- SUMMARY BOX -- */
+  .summary-box {
+    background: linear-gradient(135deg, rgba(67,97,238,0.1), rgba(114,9,183,0.1));
+    border: 1px solid rgba(67,97,238,0.3);
+    border-radius: 14px;
+    padding: 30px;
+    text-align: center;
+    margin-top: 40px;
+  }
+  .summary-box p {
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    line-height: 1.8;
+    color: #cdd9ff;
+  }
+
+  /* -- CALLOUT -- */
+  .callout {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: rgba(6,214,160,0.06);
+    border: 1px solid rgba(6,214,160,0.2);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 16px 0;
+  }
+  .callout-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+  .callout-text { font-size: 0.9rem; color: #c0f0e4; }
+  .callout-text strong { color: var(--green); }
+
+  /* -- LAYER TAG -- */
+  .layer-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: 6px;
+  }
+
+  /* -- SIDEBAR -- */
+  #sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    width: 270px;
+    background: #12151c;
+    border-right: 1px solid rgba(67,97,238,0.25);
+    z-index: 8000;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(-270px);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+  }
+  #sidebar.open { transform: translateX(0); }
+
+  #sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid rgba(67,97,238,0.2);
+    flex-shrink: 0;
+  }
+  #sidebar-head span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #90a8ff;
+  }
+  #sidebar-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  #sidebar-close:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+  #sidebar-nav {
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px 10px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(67,97,238,0.3) transparent;
+  }
+  #sidebar-nav::-webkit-scrollbar { width: 4px; }
+  #sidebar-nav::-webkit-scrollbar-thumb { background: rgba(67,97,238,0.3); border-radius: 4px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: 2px;
+    line-height: 1.4;
+  }
+  .nav-item:hover { background: rgba(67,97,238,0.1); color: var(--text); }
+  .nav-item.active {
+    background: rgba(67,97,238,0.18);
+    color: #90a8ff;
+    border-left: 3px solid #4361ee;
+    padding-left: 9px;
+  }
+  .nav-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s;
+  }
+  .nav-item.active .nav-num {
+    background: rgba(67,97,238,0.3);
+    color: #90a8ff;
+  }
+
+  /* -- SIDEBAR TOGGLE BUTTON -- */
+  #sidebar-btn {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 7999;
+    background: #1c2333;
+    border: 1px solid rgba(67,97,238,0.4);
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+    color: #90a8ff;
+    padding: 14px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s, transform 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+    writing-mode: vertical-rl;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  #sidebar-btn:hover { background: rgba(67,97,238,0.15); }
+  #sidebar-btn.shifted { left: 270px; }
+
+  @media(min-width:900px) {
+    body.sb-open .container { margin-left: 290px; transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    body.sb-open .hero { padding-left: 290px; transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .container { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .hero { transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+  }
+  #sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 7998;
+    backdrop-filter: blur(2px);
+  }
+  @media(max-width:899px) {
+    #sidebar-overlay.show { display: block; }
+  }
+
+  /* -- RESPONSIVE -- */
+  @media(max-width:480px) {
+    .section { padding: 36px 0; }
+    .card { padding: 16px; }
+    .filter-cell { width: 36px; height: 36px; font-size: 0.85rem; }
+    table { font-size: 0.8rem; }
+    th, td { padding: 8px 10px; }
+  }
+
+  /* -- YOLO EXTRA STYLES -- */
+  .nav-group {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(144,168,255,0.5);
+    padding: 12px 12px 4px;
+  }
+  .part-divider {
+    margin: 40px 0;
+    padding: 28px 32px;
+    border-radius: 16px;
+    text-align: center;
+    border: 1px solid;
+  }
+  .part-divider h2 {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .part-divider p {
+    font-size: 0.95rem;
+  }
+  .timeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 16px 0;
+    flex-wrap: nowrap;
+  }
+  .tl-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .tl-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+  .tl-year {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .tl-arrow {
+    width: 20px;
+    height: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+    margin-bottom: 16px;
+  }
+  .grid-diagram {
+    display: grid;
+    gap: 2px;
+    width: fit-content;
+  }
+  .grid-cell-diag {
+    width: 28px;
+    height: 28px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(48,54,61,0.5);
+  }
+  .grid-cell-diag.active-blue {
+    background: rgba(67,97,238,0.35);
+    border-color: rgba(67,97,238,0.6);
+  }
+  .grid-cell-diag.active-green {
+    background: rgba(6,214,160,0.25);
+    border-color: rgba(6,214,160,0.5);
+  }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR OVERLAY -->
+<!-- HERO -->
+<div class="hero">
+  <h1>YOLO &amp; YOLOv8n Explained</h1>
+  <p>A complete visual guide &mdash; YOLO fundamentals, model comparisons, and YOLOv8n architecture deep dive</p>
+  <div class="badges">
+    <span class="badge badge-blue">Object Detection</span>
+    <span class="badge badge-green">17 Sections</span>
+    <span class="badge badge-orange">Single-Pass Magic</span>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY (mobile) -->
 <div id="sidebar-overlay"></div>
 
-<!-- SIDEBAR -->
+<!-- LEFT SIDEBAR -->
 <div id="sidebar">
   <div id="sidebar-head">
     <span>Contents</span>
-    <button id="sidebar-close">✕</button>
+    <button id="sidebar-close" title="Hide sidebar">&#x2715;</button>
   </div>
   <nav id="sidebar-nav">
-    <div class="nav-part">Part 1 — YOLO Fundamentals</div>
-    <a class="nav-item" href="#s1"><span class="nav-num">1</span>YOLO Versions</a>
-    <a class="nav-item" href="#s2"><span class="nav-num">2</span>Who Controls YOLO</a>
-    <a class="nav-item" href="#s3"><span class="nav-num">3</span>Darknet Framework</a>
-    <a class="nav-item" href="#s4"><span class="nav-num">4</span>Single Pass — Why Fast</a>
-    <a class="nav-item" href="#s5"><span class="nav-num">5</span>Models Comparison</a>
-    <a class="nav-item" href="#s6"><span class="nav-num">6</span>Inference Time & FPS</a>
-    <div class="nav-part">Part 2 — YOLOv8n Deep Dive</div>
+    <div class="nav-group">PART 1 &mdash; FUNDAMENTALS</div>
+    <a class="nav-item" href="#s1"><span class="nav-num">1</span>YOLO Versions List</a>
+    <a class="nav-item" href="#s2"><span class="nav-num">2</span>Who Controls Each Version</a>
+    <a class="nav-item" href="#s3"><span class="nav-num">3</span>The Darknet Framework</a>
+    <a class="nav-item" href="#s4"><span class="nav-num">4</span>Single-Pass Revolution</a>
+    <a class="nav-item" href="#s5"><span class="nav-num">5</span>Model Comparisons</a>
+    <a class="nav-item" href="#s6"><span class="nav-num">6</span>Inference Time Comparison</a>
+    <div class="nav-group">PART 2 &mdash; YOLOv8n DEEP DIVE</div>
     <a class="nav-item" href="#s7"><span class="nav-num">7</span>What is YOLOv8n</a>
     <a class="nav-item" href="#s8"><span class="nav-num">8</span>Architecture Overview</a>
-    <a class="nav-item" href="#s9"><span class="nav-num">9</span>Backbone: CSPDarknet+C2f</a>
+    <a class="nav-item" href="#s9"><span class="nav-num">9</span>Backbone: CSPDarknet + C2f</a>
     <a class="nav-item" href="#s10"><span class="nav-num">10</span>Neck: PAN-FPN</a>
-    <a class="nav-item" href="#s11"><span class="nav-num">11</span>Head: Decoupled & Anchor-Free</a>
+    <a class="nav-item" href="#s11"><span class="nav-num">11</span>Head: Decoupled Anchor-Free</a>
     <a class="nav-item" href="#s12"><span class="nav-num">12</span>SPPF Module</a>
     <a class="nav-item" href="#s13"><span class="nav-num">13</span>Anchor-Free vs Anchor-Based</a>
     <a class="nav-item" href="#s14"><span class="nav-num">14</span>Loss Functions</a>
     <a class="nav-item" href="#s15"><span class="nav-num">15</span>Full Inference Pipeline</a>
-    <a class="nav-item" href="#s16"><span class="nav-num">16</span>YOLOv8 Variants</a>
-    <a class="nav-item" href="#s17"><span class="nav-num">★</span>Summary</a>
+    <a class="nav-item" href="#s16"><span class="nav-num">16</span>YOLOv8n vs Other YOLOs</a>
+    <a class="nav-item" href="#s17"><span class="nav-num">17</span>Summary</a>
   </nav>
 </div>
-<button id="sidebar-btn">Contents</button>
 
-<!-- HERO -->
-<div class="hero">
-  <h1>YOLOv8n Explained</h1>
-  <p>From YOLO fundamentals to the full YOLOv8 nano architecture — visual & interactive</p>
-  <div class="badges">
-    <span class="badge badge-cyan">Part 1 — Fundamentals</span>
-    <span class="badge badge-blue">Part 2 — YOLOv8n Deep Dive</span>
-    <span class="badge badge-green">Anchor-Free</span>
-    <span class="badge badge-orange">3.2M Params</span>
-    <span class="badge badge-pink">312 FPS</span>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     PART 1 — YOLO FUNDAMENTALS
-══════════════════════════════════════════════════════ -->
-<div class="part-banner" style="background:linear-gradient(90deg,rgba(0,180,216,.08),transparent)">
-  <div class="part-num" style="background:rgba(0,180,216,.15);color:#70d8f0">1</div>
-  <div>
-    <h2 style="color:#70d8f0">YOLO Fundamentals</h2>
-    <p>Versions, creators, Darknet, single-pass concept, and model comparisons</p>
-  </div>
-</div>
+<!-- SIDEBAR TOGGLE TAB -->
+<button id="sidebar-btn" title="Show / Hide contents">Contents</button>
 
 <div class="container">
 
-<!-- S1 — YOLO VERSIONS -->
-<div class="section" id="s1">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(0,180,216,.2);color:#70d8f0">1</div>
-    <div><h2>YOLO Versions List</h2><p>Every major release from v1 (2015) to v11 (2024)</p></div>
-  </div>
-  <div class="card">
-    <table>
-      <tr><th>Version</th><th>By</th><th>Year</th><th>Key Update</th></tr>
-      <tr><td><span class="pill pill-blue">YOLOv1</span></td><td>Joseph Redmon</td><td>2015</td><td>Single-pass detection concept — first real-time object detector</td></tr>
-      <tr><td><span class="pill pill-blue">YOLOv2 / YOLO9000</span></td><td>Joseph Redmon</td><td>2016</td><td>Anchor boxes + batch normalisation + detects 9000+ classes</td></tr>
-      <tr><td><span class="pill pill-blue">YOLOv3</span></td><td>Joseph Redmon</td><td>2018</td><td>Multi-scale predictions using 3 detection heads, Darknet-53 backbone</td></tr>
-      <tr><td><span class="pill pill-purple">YOLOv4</span></td><td>Alexey Bochkovskiy</td><td>2020</td><td>CSPDarknet53 backbone, mosaic augmentation, best speed/accuracy at the time</td></tr>
-      <tr><td><span class="pill pill-green">YOLOv5</span></td><td>Ultralytics</td><td>2020</td><td>PyTorch rewrite, easy deployment, 5 model sizes (n/s/m/l/x)</td></tr>
-      <tr><td><span class="pill pill-orange">YOLOv6</span></td><td>Meituan</td><td>2022</td><td>Efficient reparameterisation, focused on industrial &amp; edge devices</td></tr>
-      <tr><td><span class="pill pill-pink">YOLOv7</span></td><td>WongKinYiu</td><td>2022</td><td>Extended ELAN (E-ELAN), state-of-the-art speed/accuracy tradeoff</td></tr>
-      <tr><td><span class="pill pill-cyan">YOLOv8</span></td><td>Ultralytics</td><td>2023</td><td>Anchor-free, decoupled head — unified: detection + segmentation + pose + cls</td></tr>
-      <tr><td><span class="pill pill-pink">YOLOv9</span></td><td>WongKinYiu</td><td>2024</td><td>Programmable Gradient Info (PGI) + Generalised ELAN (GELAN)</td></tr>
-      <tr><td><span class="pill pill-purple">YOLOv10</span></td><td>Tsinghua Univ.</td><td>2024</td><td>NMS-free end-to-end detection — dual-assignment training</td></tr>
-      <tr><td><span class="pill pill-green">YOLOv11</span></td><td>Ultralytics</td><td>2024</td><td>Improved efficiency &amp; accuracy across all task types</td></tr>
-    </table>
-  </div>
-</div>
-
-<!-- S2 — WHO CONTROLS YOLO -->
-<div class="section" id="s2">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(247,37,133,.2);color:#ff80b0">2</div>
-    <div><h2>Who Controls Each Version</h2><p>No single owner — YOLO has been forked and continued by many groups</p></div>
-  </div>
-  <div class="grid-2">
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="border-color:rgba(67,97,238,.35)">
-        <h3 style="color:#90a8ff">Joseph Redmon <span class="pill pill-blue" style="margin-left:6px">v1 · v2 · v3</span></h3>
-        <p>Original creator of YOLO and the Darknet framework. Invented the single-pass detection concept. Stopped development in <strong>2018</strong> citing ethical concerns over military use of computer vision.</p>
-      </div>
-      <div class="card" style="border-color:rgba(114,9,183,.35)">
-        <h3 style="color:#c890ff">Alexey Bochkovskiy <span class="pill pill-purple" style="margin-left:6px">v4</span></h3>
-        <p>Community continuation after Redmon quit. Forked Darknet (<code>AlexeyAB/darknet</code>) and pushed accuracy &amp; speed further with CSPDarknet53 and advanced training tricks.</p>
-      </div>
-      <div class="card" style="border-color:rgba(247,37,133,.35)">
-        <h3 style="color:#ff80b0">WongKinYiu <span class="pill pill-pink" style="margin-left:6px">v7 · v9</span></h3>
-        <p>Independent research team. Produced YOLOv7 (E-ELAN) and YOLOv9 (PGI+GELAN) — both set new state-of-the-art benchmarks at release.</p>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="border-color:rgba(6,214,160,.35)">
-        <h3 style="color:#70f0c8">Ultralytics <span class="pill pill-green" style="margin-left:6px">v5 · v8 · v11</span></h3>
-        <p>Most commercially active maintainer today (Glen Jocher). Rewrote YOLO in PyTorch (v5), introduced anchor-free detection (v8), and improved efficiency (v11). Provides the widely-used <code>ultralytics</code> Python package.</p>
-      </div>
-      <div class="card" style="border-color:rgba(251,133,0,.35)">
-        <h3 style="color:#ffc060">Meituan <span class="pill pill-orange" style="margin-left:6px">v6</span></h3>
-        <p>Chinese tech company. Built YOLOv6 focused on industrial applications and edge deployment with efficient reparameterisation techniques.</p>
-      </div>
-      <div class="card" style="border-color:rgba(114,9,183,.35)">
-        <h3 style="color:#c890ff">Tsinghua University <span class="pill pill-purple" style="margin-left:6px">v10</span></h3>
-        <p>Academic research team. Introduced NMS-free end-to-end detection in YOLOv10 using dual-assignment training strategy — eliminating post-processing.</p>
-      </div>
-    </div>
-  </div>
-  <div class="highlight hl-yellow" style="margin-top:8px">
-    <strong style="color:#ffb703">Key takeaway:</strong> There is <strong>no single owner</strong> of the YOLO name. It is open-source and has been independently forked and improved by universities, companies, and individual researchers worldwide.
-  </div>
-</div>
-
-<!-- S3 — DARKNET -->
-<div class="section" id="s3">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(6,214,160,.2);color:#70f0c8">3</div>
-    <div><h2>Darknet Framework</h2><p>The C-based engine that YOLO was originally built on</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <h3>What is Darknet?</h3>
-      <p style="color:var(--muted);font-size:.9rem;margin-bottom:14px">An open-source neural network framework written by Joseph Redmon in <strong style="color:#70f0c8">C and CUDA</strong>.</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;gap:10px;align-items:center"><span class="pill pill-green">C + CUDA</span><span style="font-size:.85rem">Fast, low-level, minimal dependencies</span></div>
-        <div style="display:flex;gap:10px;align-items:center"><span class="pill pill-blue">CPU + GPU</span><span style="font-size:.85rem">Runs on both — GPU via CUDA for speed</span></div>
-        <div style="display:flex;gap:10px;align-items:center"><span class="pill pill-orange">Open Source</span><span style="font-size:.85rem">Originally at pjreddie.com/darknet</span></div>
-        <div style="display:flex;gap:10px;align-items:center"><span class="pill pill-pink">.cfg + .weights</span><span style="font-size:.85rem">Config file defines architecture</span></div>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Why it matters for YOLO</h3>
-      <div class="code"><span class="c-m">Backbone names come from Darknet:</span>
-<span class="c-c">Darknet-19</span>   <span class="c-m">← used in YOLOv2</span>
-<span class="c-c">Darknet-53</span>   <span class="c-m">← used in YOLOv3</span>
-<span class="c-c">CSPDarknet53</span> <span class="c-m">← used in YOLOv4</span>
-
-<span class="c-m">Config format:</span>
-<span class="c-g">model.cfg</span>    <span class="c-m">← defines layers &amp; params</span>
-<span class="c-g">model.weights</span><span class="c-m">← trained weight values</span></div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <h3>Darknet timeline</h3>
-    <div style="display:flex;gap:0;overflow-x:auto;padding-bottom:8px">
-      <div style="min-width:140px;padding:14px;background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.25);border-radius:10px 0 0 10px;text-align:center">
-        <div style="color:#90a8ff;font-weight:800">2013</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Redmon creates Darknet framework in C</div>
-      </div>
-      <div style="min-width:140px;padding:14px;background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-top:1px solid;border-bottom:1px solid;text-align:center">
-        <div style="color:#70f0c8;font-weight:800">2015–18</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">YOLOv1–v3 built on Darknet</div>
-      </div>
-      <div style="min-width:140px;padding:14px;background:rgba(114,9,183,.1);border:1px solid rgba(114,9,183,.25);border-top:1px solid;border-bottom:1px solid;text-align:center">
-        <div style="color:#c890ff;font-weight:800">2020</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">AlexeyAB forks Darknet → YOLOv4</div>
-      </div>
-      <div style="min-width:140px;padding:14px;background:rgba(251,133,0,.08);border:1px solid rgba(251,133,0,.25);border-radius:0 10px 10px 0;text-align:center">
-        <div style="color:#ffc060;font-weight:800">2020+</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">v5 onwards moved to <strong>PyTorch</strong></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- S4 — SINGLE PASS -->
-<div class="section" id="s4">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(255,183,3,.2);color:#ffb703">4</div>
-    <div><h2>YOLO Specialty — Single Pass</h2><p>Why one forward pass through a CNN makes YOLO revolutionary</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card" style="border-color:rgba(239,35,60,.3)">
-      <h3 style="color:#ff8090">R-CNN — Multiple Passes (slow)</h3>
-      <div class="pipeline" style="margin-top:12px">
-        <div class="pipe-box" style="background:rgba(239,35,60,.1);border:1px solid rgba(239,35,60,.3);color:#ff8090;max-width:100%">
-          Original Image
-        </div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(239,35,60,.08);border:1px solid rgba(239,35,60,.2);color:#ff8090;max-width:100%">
-          Region Proposal → cut ~2000 pieces
-        </div>
-        <div class="pipe-arrow"></div>
-        <div style="width:100%;display:flex;flex-direction:column;gap:3px">
-          <div style="padding:6px 12px;background:rgba(239,35,60,.07);border:1px solid rgba(239,35,60,.15);border-radius:6px;font-size:.8rem;text-align:center;color:#ff8090">crop 1 → CNN layers → result</div>
-          <div style="padding:6px 12px;background:rgba(239,35,60,.07);border:1px solid rgba(239,35,60,.15);border-radius:6px;font-size:.8rem;text-align:center;color:#ff8090">crop 2 → CNN layers → result</div>
-          <div style="padding:6px 12px;background:rgba(239,35,60,.07);border:1px solid rgba(239,35,60,.15);border-radius:6px;font-size:.8rem;text-align:center;color:#ff8090">crop 3 → CNN layers → result</div>
-          <div style="padding:6px 12px;background:rgba(48,54,61,.4);border:1px solid var(--border);border-radius:6px;font-size:.8rem;text-align:center;color:var(--muted)">... 2000 times total</div>
-        </div>
-      </div>
-      <div style="margin-top:12px;padding:10px;background:rgba(239,35,60,.06);border-radius:8px;font-size:.83rem;color:#ff8090;text-align:center">CNN runs <strong>2000×</strong> on same image = Very Slow</div>
-    </div>
-    <div class="card" style="border-color:rgba(6,214,160,.3)">
-      <h3 style="color:#70f0c8">YOLO — Single Pass (fast)</h3>
-      <div class="pipeline" style="margin-top:12px">
-        <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.3);color:#70f0c8;max-width:100%">
-          Full Image (640×640)
-        </div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.3);color:#90a8ff;max-width:100%">
-          CNN Layer 1 → Layer 2 → ··· → Layer N
-          <div class="pipe-sub">one continuous flow, no cutting</div>
-        </div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.4);color:#06d6a0;max-width:100%">
-          S×S Grid — all cells predicted at once
-          <div class="pipe-sub">every cell outputs box + class simultaneously</div>
-        </div>
-        <div class="pipe-arrow"></div>
-        <div style="width:100%;padding:10px 12px;background:rgba(6,214,160,.08);border-radius:8px;text-align:center;font-size:.83rem;color:#70f0c8">All objects found in <strong>one forward pass</strong></div>
-      </div>
-      <div style="margin-top:12px;padding:10px;background:rgba(6,214,160,.06);border-radius:8px;font-size:.83rem;color:#70f0c8;text-align:center">CNN runs <strong>1×</strong> on full image = Real-time</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <h3>Grid system — how all objects are found at once</h3>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;margin-top:8px">
+  <!-- S1: YOLO VERSIONS LIST -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(67,97,238,0.2);color:#90a8ff">1</div>
       <div>
-        <div style="color:var(--muted);font-size:.78rem;margin-bottom:8px">Image divided into S×S grid</div>
-        <div style="display:grid;grid-template-columns:repeat(5,46px);gap:2px">
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(67,97,238,.35);border:2px solid #4361ee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.9rem">●</div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-          <div style="height:46px;background:rgba(48,54,61,.4);border-radius:4px"></div>
-        </div>
-        <div style="color:#90a8ff;font-size:.72rem;margin-top:6px">● = object center falls here → this cell predicts it</div>
-      </div>
-      <div style="flex:1;min-width:200px">
-        <table>
-          <tr><th>Each cell predicts</th><th>Meaning</th></tr>
-          <tr><td><strong style="color:#ffb703">x, y</strong></td><td style="font-size:.83rem">Object center position</td></tr>
-          <tr><td><strong style="color:#70f0c8">w, h</strong></td><td style="font-size:.83rem">Box width &amp; height</td></tr>
-          <tr><td><strong style="color:#90a8ff">confidence</strong></td><td style="font-size:.83rem">Is there an object here?</td></tr>
-          <tr><td><strong style="color:#ff80b0">class scores</strong></td><td style="font-size:.83rem">What type of object?</td></tr>
-        </table>
-        <div class="highlight hl-blue" style="margin-top:12px;font-size:.85rem">All S×S cells make their predictions <strong style="color:#90a8ff">simultaneously</strong> in one forward pass — that is why YOLO is fast.</div>
+        <h2>YOLO Versions List</h2>
+        <p>All major releases from 2015 to 2024</p>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- S5 — MODELS COMPARISON -->
-<div class="section" id="s5">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(114,9,183,.2);color:#c890ff">5</div>
-    <div><h2>Object Detection Models Compared</h2><p>YOLO alongside all major detectors</p></div>
-  </div>
-  <div class="card">
-    <table>
-      <tr><th>Model</th><th>By</th><th>Speed</th><th>Accuracy</th><th>Approach</th></tr>
-      <tr><td><strong>R-CNN</strong></td><td style="font-size:.82rem">UC Berkeley</td><td><span class="pill pill-red">Very Slow</span></td><td><span class="pill pill-orange">Good</span></td><td style="font-size:.82rem">Region proposals — runs CNN on each separately</td></tr>
-      <tr><td><strong>Fast R-CNN</strong></td><td style="font-size:.82rem">Microsoft</td><td><span class="pill pill-red">Slow</span></td><td><span class="pill pill-orange">Good</span></td><td style="font-size:.82rem">Shared conv features over whole image</td></tr>
-      <tr><td><strong>Faster R-CNN</strong></td><td style="font-size:.82rem">Microsoft</td><td><span class="pill pill-yellow">Moderate</span></td><td><span class="pill pill-green">Very Good</span></td><td style="font-size:.82rem">Region Proposal Network (RPN) inside model</td></tr>
-      <tr><td><strong>SSD</strong></td><td style="font-size:.82rem">Google</td><td><span class="pill pill-green">Fast</span></td><td><span class="pill pill-orange">Moderate</span></td><td style="font-size:.82rem">Multi-scale single-pass, anchor-based</td></tr>
-      <tr><td><strong>RetinaNet</strong></td><td style="font-size:.82rem">Facebook AI</td><td><span class="pill pill-yellow">Moderate</span></td><td><span class="pill pill-green">Very Good</span></td><td style="font-size:.82rem">Focal loss to fix class imbalance</td></tr>
-      <tr><td><strong>EfficientDet</strong></td><td style="font-size:.82rem">Google</td><td><span class="pill pill-green">Fast</span></td><td><span class="pill pill-cyan">Excellent</span></td><td style="font-size:.82rem">Compound scaling of backbone+neck+head</td></tr>
-      <tr><td><strong>DETR</strong></td><td style="font-size:.82rem">Facebook AI</td><td><span class="pill pill-yellow">Moderate</span></td><td><span class="pill pill-green">Very Good</span></td><td style="font-size:.82rem">Transformer-based, NMS-free</td></tr>
-      <tr><td><strong style="color:#70d8f0">YOLOv8</strong></td><td style="font-size:.82rem">Ultralytics</td><td><span class="pill pill-cyan">Very Fast</span></td><td><span class="pill pill-cyan">Excellent</span></td><td style="font-size:.82rem">Anchor-free, single-pass, decoupled head</td></tr>
-      <tr><td><strong>RT-DETR</strong></td><td style="font-size:.82rem">Baidu</td><td><span class="pill pill-green">Fast</span></td><td><span class="pill pill-cyan">Excellent</span></td><td style="font-size:.82rem">Real-time transformer, no NMS needed</td></tr>
-      <tr><td><strong>CenterNet</strong></td><td style="font-size:.82rem">Princeton</td><td><span class="pill pill-green">Fast</span></td><td><span class="pill pill-orange">Good</span></td><td style="font-size:.82rem">Keypoint-based, anchor-free</td></tr>
-    </table>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
-      <div style="padding:10px 14px;background:rgba(239,35,60,.08);border:1px solid rgba(239,35,60,.2);border-radius:8px;font-size:.82rem;flex:1;min-width:140px"><strong style="color:#ff8090">Speed first</strong><br><span style="color:var(--muted)">YOLO, SSD, CenterNet</span></div>
-      <div style="padding:10px 14px;background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-radius:8px;font-size:.82rem;flex:1;min-width:140px"><strong style="color:#70f0c8">Accuracy first</strong><br><span style="color:var(--muted)">Faster R-CNN, EfficientDet, RetinaNet</span></div>
-      <div style="padding:10px 14px;background:rgba(114,9,183,.1);border:1px solid rgba(114,9,183,.25);border-radius:8px;font-size:.82rem;flex:1;min-width:140px"><strong style="color:#c890ff">Transformer</strong><br><span style="color:var(--muted)">DETR, RT-DETR</span></div>
-      <div style="padding:10px 14px;background:rgba(0,180,216,.08);border:1px solid rgba(0,180,216,.25);border-radius:8px;font-size:.82rem;flex:1;min-width:140px"><strong style="color:#70d8f0">Best tradeoff</strong><br><span style="color:var(--muted)">YOLOv8 — fast AND accurate</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- S6 — INFERENCE TIME -->
-<div class="section" id="s6">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(251,133,0,.2);color:#ffc060">6</div>
-    <div><h2>Inference Time & Speed Comparison</h2><p>Approximate values on NVIDIA V100 GPU, COCO dataset — single image</p></div>
-  </div>
-  <div class="card" style="margin-bottom:16px">
-    <table>
-      <tr><th>Model</th><th>Time (ms)</th><th>FPS</th><th>mAP</th></tr>
-      <tr><td><strong>R-CNN</strong></td><td style="color:#ef233c">~47,000 ms</td><td style="color:#ef233c">&lt;1</td><td>~66%</td></tr>
-      <tr><td><strong>Fast R-CNN</strong></td><td style="color:#ef233c">~2,300 ms</td><td style="color:#ef233c">&lt;1</td><td>~70%</td></tr>
-      <tr><td><strong>Faster R-CNN</strong></td><td style="color:#fb8500">~73 ms</td><td style="color:#fb8500">~14</td><td>~73%</td></tr>
-      <tr><td><strong>SSD300</strong></td><td style="color:#ffb703">~13 ms</td><td style="color:#ffb703">~77</td><td>~74%</td></tr>
-      <tr><td><strong>RetinaNet</strong></td><td style="color:#fb8500">~80 ms</td><td style="color:#fb8500">~12</td><td>~76%</td></tr>
-      <tr><td><strong>YOLOv3</strong></td><td style="color:#ffb703">~22 ms</td><td style="color:#ffb703">~45</td><td>~57%</td></tr>
-      <tr><td><strong>EfficientDet-D0</strong></td><td style="color:#ffb703">~16 ms</td><td style="color:#ffb703">~62</td><td>~77%</td></tr>
-      <tr><td><strong>YOLOv5s</strong></td><td style="color:#06d6a0">~6.4 ms</td><td style="color:#06d6a0">~156</td><td>~56%</td></tr>
-      <tr><td><strong>CenterNet</strong></td><td style="color:#ffb703">~28 ms</td><td style="color:#ffb703">~35</td><td>~72%</td></tr>
-      <tr><td><strong>DETR</strong></td><td style="color:#fb8500">~52 ms</td><td style="color:#fb8500">~19</td><td>~75%</td></tr>
-      <tr><td><strong style="color:#70d8f0">YOLOv8n</strong></td><td style="color:#06d6a0"><strong>~6 ms</strong></td><td style="color:#06d6a0"><strong>~166</strong></td><td>37.3% COCO</td></tr>
-      <tr><td><strong>RT-DETR-L</strong></td><td style="color:#ffb703">~32 ms</td><td style="color:#ffb703">~31</td><td>~80%</td></tr>
-    </table>
-  </div>
-  <div class="grid-3">
-    <div class="card" style="border-color:rgba(0,180,216,.3)">
-      <h3 style="color:#70d8f0">FPS (Frames Per Second)</h3>
-      <p style="font-size:.85rem">How many images processed <strong>per second</strong>. Higher = faster model. Real-time threshold is <strong style="color:#06d6a0">≥ 30 FPS</strong>.</p>
-      <div style="margin-top:10px;font-size:.82rem;color:var(--muted)">Example: 166 FPS = 166 images/second</div>
-    </div>
-    <div class="card" style="border-color:rgba(255,183,3,.3)">
-      <h3 style="color:#ffb703">~ (Tilde)</h3>
-      <p style="font-size:.85rem">Means <strong>approximately</strong> — values vary by hardware, image size, and batch size. Not exact.</p>
-      <div style="margin-top:10px;font-size:.82rem;color:var(--muted)">~22ms = roughly 20–24ms range</div>
-    </div>
-    <div class="card" style="border-color:rgba(239,35,60,.3)">
-      <h3 style="color:#ff8090">mAP (Mean Average Precision)</h3>
-      <p style="font-size:.85rem">Overall accuracy score across all object classes. Higher = better. <strong style="color:#06d6a0">80%+</strong> = excellent.</p>
-      <div class="formula" style="margin-top:10px;font-size:.78rem">mAP = mean of AP per class</div>
-    </div>
-  </div>
-</div>
-
-</div><!-- /container -->
-
-<!-- ══════════════════════════════════════════════════════
-     PART 2 — YOLOv8n DEEP DIVE
-══════════════════════════════════════════════════════ -->
-<div class="part-banner" style="background:linear-gradient(90deg,rgba(67,97,238,.1),transparent)">
-  <div class="part-num" style="background:rgba(67,97,238,.2);color:#90a8ff">2</div>
-  <div>
-    <h2 style="color:#90a8ff">YOLOv8n — Deep Dive</h2>
-    <p>Backbone · Neck · Head · SPPF · Anchor-free · Loss · Inference pipeline</p>
-  </div>
-</div>
-
-<div class="container">
-
-<!-- S7 — WHAT IS YOLOv8n -->
-<div class="section" id="s7">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(0,180,216,.2);color:#70d8f0">7</div>
-    <div><h2>What is YOLOv8n?</h2><p>The nano variant of Ultralytics' YOLOv8 — smallest and fastest in the family</p></div>
-  </div>
-  <div class="grid-2">
     <div class="card">
-      <h3>Key facts</h3>
       <table>
-        <tr><th>Property</th><th>Value</th></tr>
-        <tr><td>Developer</td><td><span class="pill pill-green">Ultralytics</span></td></tr>
-        <tr><td>Released</td><td>January 2023</td></tr>
-        <tr><td>Variant</td><td><strong style="color:#70d8f0">n = nano</strong> (smallest)</td></tr>
-        <tr><td>Parameters</td><td><strong style="color:#ffb703">3.2 Million</strong></td></tr>
-        <tr><td>mAP COCO</td><td><strong style="color:#06d6a0">37.3%</strong></td></tr>
-        <tr><td>Speed (A100)</td><td><strong style="color:#06d6a0">~312 FPS</strong></td></tr>
-        <tr><td>Input size</td><td>640 × 640 × 3</td></tr>
-        <tr><td>Detection type</td><td><span class="pill pill-cyan">Anchor-free</span></td></tr>
-        <tr><td>Head type</td><td><span class="pill pill-purple">Decoupled</span></td></tr>
-        <tr><td>Framework</td><td>PyTorch</td></tr>
+        <thead><tr><th>Version</th><th>By</th><th>Key Update</th><th>Year</th></tr></thead>
+        <tbody>
+          <tr><td><strong>YOLOv1</strong></td><td>Joseph Redmon</td><td>Single-pass detection concept</td><td><span class="pill pill-blue">2015</span></td></tr>
+          <tr><td><strong>YOLOv2 (YOLO9000)</strong></td><td>Joseph Redmon</td><td>Anchor boxes + 9000 classes</td><td><span class="pill pill-blue">2016</span></td></tr>
+          <tr><td><strong>YOLOv3</strong></td><td>Joseph Redmon</td><td>Multi-scale predictions (3 scales)</td><td><span class="pill pill-blue">2018</span></td></tr>
+          <tr><td><strong>YOLOv4</strong></td><td>Alexey Bochkovskiy</td><td>CSPDarknet53, mosaic augmentation</td><td><span class="pill pill-green">2020</span></td></tr>
+          <tr><td><strong>YOLOv5</strong></td><td>Ultralytics</td><td>PyTorch rewrite, n/s/m/l/x sizes</td><td><span class="pill pill-green">2020</span></td></tr>
+          <tr><td><strong>YOLOv6</strong></td><td>Meituan</td><td>Industrial/edge optimisation</td><td><span class="pill pill-orange">2022</span></td></tr>
+          <tr><td><strong>YOLOv7</strong></td><td>WongKinYiu</td><td>E-ELAN, best speed/accuracy</td><td><span class="pill pill-orange">2022</span></td></tr>
+          <tr><td><strong>YOLOv8</strong></td><td>Ultralytics</td><td>Anchor-free, decoupled head, all tasks</td><td><span class="pill pill-pink">2023</span></td></tr>
+          <tr><td><strong>YOLOv9</strong></td><td>WongKinYiu</td><td>PGI + GELAN architecture</td><td><span class="pill pill-pink">2024</span></td></tr>
+          <tr><td><strong>YOLOv10</strong></td><td>Tsinghua Univ</td><td>NMS-free end-to-end</td><td><span class="pill pill-pink">2024</span></td></tr>
+          <tr><td><strong>YOLOv11</strong></td><td>Ultralytics</td><td>Improved efficiency across all tasks</td><td><span class="pill pill-pink">2024</span></td></tr>
+        </tbody>
       </table>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div class="card" style="border-color:rgba(6,214,160,.3)">
-        <h3>YOLOv8 family — 5 sizes</h3>
-        <div class="bar-row" style="margin-top:8px">
-          <div class="bar-label"><span><strong style="color:#70d8f0">n</strong> nano</span><span style="color:#70d8f0">3.2M · 37.3%</span></div>
-          <div class="bar-bg"><div class="bar-fill" style="width:15%;background:#00b4d8"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span><strong style="color:#06d6a0">s</strong> small</span><span style="color:#06d6a0">11.2M · 44.9%</span></div>
-          <div class="bar-bg"><div class="bar-fill" style="width:35%;background:#06d6a0"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span><strong style="color:#ffb703">m</strong> medium</span><span style="color:#ffb703">25.9M · 50.2%</span></div>
-          <div class="bar-bg"><div class="bar-fill" style="width:55%;background:#ffb703"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span><strong style="color:#fb8500">l</strong> large</span><span style="color:#fb8500">43.7M · 52.9%</span></div>
-          <div class="bar-bg"><div class="bar-fill" style="width:75%;background:#fb8500"></div></div>
-        </div>
-        <div class="bar-row">
-          <div class="bar-label"><span><strong style="color:#f72585">x</strong> xlarge</span><span style="color:#f72585">68.2M · 53.9%</span></div>
-          <div class="bar-bg"><div class="bar-fill" style="width:100%;background:#f72585"></div></div>
-        </div>
+    <div class="highlight hl-yellow">
+      <strong style="color:#ffb703">Key insight:</strong> The YOLO name is not owned by one organization &mdash; different groups independently published new YOLO versions after Joseph Redmon stopped.
+    </div>
+  </div>
+
+  <!-- S2: WHO CONTROLS EACH VERSION -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(247,37,133,0.2);color:#ff80b0">2</div>
+      <div>
+        <h2>Who Controls Each Version</h2>
+        <p>YOLO has no single owner &mdash; it has been forked and advanced by many groups</p>
       </div>
-      <div class="card">
-        <h3>Tasks YOLOv8 supports</h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-          <span class="pill pill-blue">Object Detection</span>
-          <span class="pill pill-green">Segmentation</span>
-          <span class="pill pill-pink">Pose Estimation</span>
-          <span class="pill pill-orange">Classification</span>
-          <span class="pill pill-cyan">OBB Detection</span>
-        </div>
-        <p style="margin-top:10px;font-size:.85rem;color:var(--muted)">One unified framework handles all these — switch tasks by changing the model suffix (yolov8n.pt / yolov8n-seg.pt / yolov8n-pose.pt)</p>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card" style="border-color:rgba(67,97,238,0.4)">
+        <h3 style="color:#90a8ff">Joseph Redmon</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-blue">YOLOv1</span> <span class="pill pill-blue">v2</span> <span class="pill pill-blue">v3</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">Original inventor. Stopped in 2018 citing ethical concerns around surveillance and military use.</div>
+      </div>
+      <div class="card" style="border-color:rgba(251,133,0,0.4)">
+        <h3 style="color:#ffc060">Alexey Bochkovskiy</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-orange">YOLOv4</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">Community continuation after Redmon quit. Extended the Darknet framework with major improvements.</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,214,160,0.4)">
+        <h3 style="color:#70f0c8">Ultralytics</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-green">YOLOv5</span> <span class="pill pill-green">v8</span> <span class="pill pill-green">v11</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">Most commercially active today. Maintains Python/PyTorch ecosystem with pip install ultralytics.</div>
+      </div>
+      <div class="card" style="border-color:rgba(114,9,183,0.4)">
+        <h3 style="color:#c890ff">Meituan</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-purple">YOLOv6</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">Optimized for industrial and edge deployment scenarios.</div>
+      </div>
+      <div class="card" style="border-color:rgba(255,183,3,0.4)">
+        <h3 style="color:#ffd060">WongKinYiu</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-yellow">YOLOv7</span> <span class="pill pill-yellow">v9</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">Academic research focus. Achieved best speed/accuracy tradeoffs with novel architectures.</div>
+      </div>
+      <div class="card" style="border-color:rgba(247,37,133,0.4)">
+        <h3 style="color:#ff80b0">Tsinghua University</h3>
+        <div style="margin-bottom:10px"><span class="pill pill-pink">YOLOv10</span></div>
+        <div style="color:var(--muted);font-size:0.88rem">NMS-free end-to-end detection. Eliminates non-maximum suppression post-processing step.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>YOLO Version Timeline</h3>
+      <div class="timeline">
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(67,97,238,0.25);color:#90a8ff;border:2px solid rgba(67,97,238,0.5)">v1</div><div class="tl-year">2015</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(67,97,238,0.25);color:#90a8ff;border:2px solid rgba(67,97,238,0.5)">v2</div><div class="tl-year">2016</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(67,97,238,0.25);color:#90a8ff;border:2px solid rgba(67,97,238,0.5)">v3</div><div class="tl-year">2018</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(251,133,0,0.25);color:#ffc060;border:2px solid rgba(251,133,0,0.5)">v4</div><div class="tl-year">2020</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(6,214,160,0.2);color:#70f0c8;border:2px solid rgba(6,214,160,0.4)">v5</div><div class="tl-year">2020</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(114,9,183,0.2);color:#c890ff;border:2px solid rgba(114,9,183,0.4)">v6</div><div class="tl-year">2022</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(255,183,3,0.2);color:#ffd060;border:2px solid rgba(255,183,3,0.4)">v7</div><div class="tl-year">2022</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(247,37,133,0.2);color:#ff80b0;border:2px solid rgba(247,37,133,0.4)">v8</div><div class="tl-year">2023</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(247,37,133,0.2);color:#ff80b0;border:2px solid rgba(247,37,133,0.4)">v9</div><div class="tl-year">2024</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(247,37,133,0.2);color:#ff80b0;border:2px solid rgba(247,37,133,0.4)">v10</div><div class="tl-year">2024</div></div>
+        <div class="tl-arrow"></div>
+        <div class="tl-item"><div class="tl-dot" style="background:rgba(247,37,133,0.2);color:#ff80b0;border:2px solid rgba(247,37,133,0.4)">v11</div><div class="tl-year">2024</div></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- S8 — ARCHITECTURE OVERVIEW -->
-<div class="section" id="s8">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(67,97,238,.2);color:#90a8ff">8</div>
-    <div><h2>Architecture Overview</h2><p>Three blocks: Backbone → Neck → Head with full shape transformations</p></div>
+  <!-- S3: DARKNET FRAMEWORK -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(251,133,0,0.2);color:#ffc060">3</div>
+      <div>
+        <h2>The Darknet Framework</h2>
+        <p>The engine that powered early YOLO</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card" style="border-color:rgba(251,133,0,0.3)">
+        <h3 style="color:#ffc060">What is Darknet</h3>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;font-size:0.9rem">
+          <li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#fb8500;margin-top:2px">&#9658;</span><span>Written in <strong>C and CUDA</strong> by Joseph Redmon</span></li>
+          <li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#fb8500;margin-top:2px">&#9658;</span><span>Fast, lightweight, minimal dependencies</span></li>
+          <li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#fb8500;margin-top:2px">&#9658;</span><span>Supports CPU and GPU</span></li>
+          <li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#fb8500;margin-top:2px">&#9658;</span><span>YOLO was built <strong>ON TOP of</strong> Darknet</span></li>
+          <li style="display:flex;gap:8px;align-items:flex-start"><span style="color:#fb8500;margin-top:2px">&#9658;</span><span>Backbone names (Darknet-19, CSPDarknet53) come from it</span></li>
+        </ul>
+        <div class="highlight hl-orange" style="margin-top:14px">
+          <strong>Config format:</strong> <code style="color:#ffc060">.cfg</code> + <code style="color:#ffc060">.weights</code> files defined the entire model architecture and parameters
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(67,97,238,0.3)">
+        <h3 style="color:#90a8ff">Evolution After Redmon</h3>
+        <div class="pipeline">
+          <div class="pipe-box" style="background:rgba(251,133,0,0.12);border:1px solid rgba(251,133,0,0.3);color:#ffc060">Darknet (Redmon)<div class="pipe-sub">Original C/CUDA framework</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-box" style="background:rgba(251,133,0,0.08);border:1px solid rgba(251,133,0,0.2);color:#ffab70">AlexeyAB fork<div class="pipe-sub">Added YOLOv4 support</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-box" style="background:rgba(6,214,160,0.1);border:1px solid rgba(6,214,160,0.25);color:#70f0c8">PyTorch era<div class="pipe-sub">YOLOv5 onwards moved to Python/PyTorch</div></div>
+          <div class="pipe-arrow"></div>
+          <div class="pipe-box" style="background:rgba(67,97,238,0.12);border:1px solid rgba(67,97,238,0.3);color:#90a8ff">Ultralytics<div class="pipe-sub">Modern Python API, pip install ultralytics</div></div>
+        </div>
+        <div class="highlight hl-blue" style="margin-top:14px">
+          <strong>Why the shift?</strong> PyTorch is easier to use, debug, and extend than C. The speed advantage of C became less important as GPU libraries improved.
+        </div>
+      </div>
+    </div>
   </div>
-  <div style="display:flex;gap:20px;flex-wrap:wrap">
-    <div style="flex:1;min-width:260px">
-      <div class="pipeline">
-        <div class="pipe-box" style="background:rgba(67,97,238,.15);border:1px solid rgba(67,97,238,.3);color:#90a8ff">📷 Input Image<div class="pipe-sub">640 × 640 × 3</div></div>
-        <div class="pipe-arrow"></div>
+
+  <!-- S4: SINGLE-PASS REVOLUTION -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(6,214,160,0.2);color:#70f0c8">4</div>
+      <div>
+        <h2>The Single-Pass Revolution</h2>
+        <p>Why YOLO changed object detection forever</p>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card" style="border-color:rgba(239,35,60,0.4)">
+        <h3 style="color:#ff8090">R-CNN Approach &mdash; SLOW</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem">
+          <div style="display:flex;gap:8px"><span style="color:#ef233c;font-weight:800;flex-shrink:0">1.</span><span>Selective Search proposes <strong style="color:#ff8090">~2000 region candidates</strong></span></div>
+          <div style="display:flex;gap:8px"><span style="color:#ef233c;font-weight:800;flex-shrink:0">2.</span><span>Each region resized to fixed size</span></div>
+          <div style="display:flex;gap:8px"><span style="color:#ef233c;font-weight:800;flex-shrink:0">3.</span><span><strong style="color:#ff8090">EACH region</strong> goes through CNN separately</span></div>
+          <div style="display:flex;gap:8px"><span style="color:#ef233c;font-weight:800;flex-shrink:0">4.</span><span>Classify each region</span></div>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:rgba(239,35,60,0.08);border-radius:8px">
+          <div style="color:#ff8090;font-weight:700;font-size:0.88rem">Result: ~2000 CNN forward passes per image</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">Speed: &lt; 1 FPS (cannot do real-time)</div>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(6,214,160,0.4)">
+        <h3 style="color:#70f0c8">YOLO Approach &mdash; FAST</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:0.88rem">
+          <div style="display:flex;gap:8px"><span style="color:#06d6a0;font-weight:800;flex-shrink:0">1.</span><span>Resize <strong style="color:#70f0c8">full image</strong> to fixed size (e.g. 640&times;640)</span></div>
+          <div style="display:flex;gap:8px"><span style="color:#06d6a0;font-weight:800;flex-shrink:0">2.</span><span><strong style="color:#70f0c8">ONE forward pass</strong> through CNN</span></div>
+          <div style="display:flex;gap:8px"><span style="color:#06d6a0;font-weight:800;flex-shrink:0">3.</span><span>CNN outputs predictions for <strong style="color:#70f0c8">ALL locations simultaneously</strong></span></div>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:rgba(6,214,160,0.08);border-radius:8px">
+          <div style="color:#70f0c8;font-weight:700;font-size:0.88rem">Result: 1 CNN forward pass per image</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">Speed: 30&ndash;300+ FPS (real-time capable)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Visual Comparison</h3>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+        <div style="flex:1;min-width:200px;max-width:280px">
+          <div style="text-align:center;padding:8px 0;font-weight:800;color:#ff8090">R-CNN</div>
+          <div style="background:rgba(239,35,60,0.05);border:1px solid rgba(239,35,60,0.3);border-radius:10px;padding:14px">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px">
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(239,35,60,0.2);border:1px solid rgba(239,35,60,0.4);border-radius:4px;padding:5px 3px;text-align:center"><div style="width:100%;height:22px;background:rgba(239,35,60,0.15);border-radius:2px;margin-bottom:3px"></div><div style="font-size:0.58rem;color:#ff8090">CNN</div></div>
+              <div style="background:rgba(48,54,61,0.4);border:1px dashed var(--border);border-radius:4px;padding:5px 3px;text-align:center;display:flex;align-items:center;justify-content:center"><div style="font-size:0.6rem;color:var(--muted)">...</div></div>
+            </div>
+            <div style="text-align:center;font-weight:800;font-size:0.85rem;color:#ef233c;padding:7px;background:rgba(239,35,60,0.1);border-radius:5px">= 2000+ runs</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:1.4rem;color:var(--muted);flex-shrink:0">vs</div>
+        <div style="flex:1;min-width:200px;max-width:280px">
+          <div style="text-align:center;padding:8px 0;font-weight:800;color:#70f0c8">YOLO</div>
+          <div style="background:rgba(6,214,160,0.05);border:1px solid rgba(6,214,160,0.3);border-radius:10px;padding:14px">
+            <div style="background:rgba(6,214,160,0.08);border:1px solid rgba(6,214,160,0.2);border-radius:7px;padding:4px;margin-bottom:10px">
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px">
+                <div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div>
+                <div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.35);border:1px solid rgba(6,214,160,0.6);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.35);border:1px solid rgba(6,214,160,0.6);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div>
+                <div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.35);border:1px solid rgba(6,214,160,0.6);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.35);border:1px solid rgba(6,214,160,0.6);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div>
+                <div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div>
+                <div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div><div style="background:rgba(6,214,160,0.12);border:1px solid rgba(6,214,160,0.2);border-radius:2px;height:20px"></div>
+              </div>
+              <div style="text-align:center;font-size:0.6rem;color:rgba(6,214,160,0.6);margin-top:4px">full image (5&times;5 grid)</div>
+            </div>
+            <div style="text-align:center;font-weight:800;font-size:0.85rem;color:#06d6a0;padding:7px;background:rgba(6,214,160,0.1);border-radius:5px">= 1 run</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="highlight hl-blue">
+      <strong>Grid system:</strong> YOLO divides the image into an S&times;S grid (e.g. 13&times;13). Each grid cell is responsible for predicting objects whose <strong>CENTER point</strong> falls within that cell. All cells predict simultaneously in one forward pass.
+    </div>
+    <div class="card" style="margin-top:0">
+      <h3>5&times;5 Grid Sample &mdash; Active Detection Cells</h3>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+        <div>
+          <div class="grid-diagram" style="grid-template-columns:repeat(5,28px)">
+            <div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag active-blue"></div><div class="grid-cell-diag active-blue"></div><div class="grid-cell-diag"></div>
+            <div class="grid-cell-diag"></div><div class="grid-cell-diag active-blue"></div><div class="grid-cell-diag active-blue"></div><div class="grid-cell-diag active-blue"></div><div class="grid-cell-diag"></div>
+            <div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag active-green"></div><div class="grid-cell-diag active-green"></div>
+            <div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag active-green"></div><div class="grid-cell-diag active-green"></div>
+            <div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag"></div><div class="grid-cell-diag"></div>
+          </div>
+        </div>
+        <div style="font-size:0.85rem;color:var(--muted)">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:16px;height:16px;border-radius:3px;background:rgba(67,97,238,0.35);border:1px solid rgba(67,97,238,0.6);flex-shrink:0"></div><span>Cell detecting Object 1 (e.g. car)</span></div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:16px;height:16px;border-radius:3px;background:rgba(6,214,160,0.25);border:1px solid rgba(6,214,160,0.5);flex-shrink:0"></div><span>Cell detecting Object 2 (e.g. person)</span></div>
+          <div style="display:flex;gap:8px;align-items:center"><div style="width:16px;height:16px;border-radius:3px;background:rgba(255,255,255,0.04);border:1px solid rgba(48,54,61,0.5);flex-shrink:0"></div><span>Empty cell (background)</span></div>
+          <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:0.82rem">All 25 cells evaluated simultaneously in one forward pass</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S5: MODEL COMPARISONS -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(114,9,183,0.2);color:#c890ff">5</div>
+      <div>
+        <h2>Object Detection Models Compared</h2>
+        <p>YOLO in context with other major detection architectures</p>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Model</th><th>By</th><th>Speed</th><th>Accuracy</th><th>Approach</th></tr></thead>
+        <tbody>
+          <tr><td><strong>R-CNN</strong></td><td style="color:var(--muted);font-size:0.85rem">UC Berkeley</td><td><span class="pill pill-red">Very Slow</span></td><td>Good</td><td style="color:var(--muted);font-size:0.85rem">Region proposals multi-pass</td></tr>
+          <tr><td><strong>Fast R-CNN</strong></td><td style="color:var(--muted);font-size:0.85rem">Microsoft</td><td><span class="pill pill-orange">Slow</span></td><td>Good</td><td style="color:var(--muted);font-size:0.85rem">Shared conv features</td></tr>
+          <tr><td><strong>Faster R-CNN</strong></td><td style="color:var(--muted);font-size:0.85rem">Microsoft</td><td><span class="pill pill-yellow">Moderate</span></td><td>Very Good</td><td style="color:var(--muted);font-size:0.85rem">Region Proposal Network</td></tr>
+          <tr><td><strong>SSD</strong></td><td style="color:var(--muted);font-size:0.85rem">Google</td><td><span class="pill pill-green">Fast</span></td><td>Moderate</td><td style="color:var(--muted);font-size:0.85rem">Multi-scale single-pass</td></tr>
+          <tr><td><strong>RetinaNet</strong></td><td style="color:var(--muted);font-size:0.85rem">Facebook AI</td><td><span class="pill pill-yellow">Moderate</span></td><td>Very Good</td><td style="color:var(--muted);font-size:0.85rem">Focal loss</td></tr>
+          <tr><td><strong>EfficientDet</strong></td><td style="color:var(--muted);font-size:0.85rem">Google</td><td><span class="pill pill-green">Fast</span></td><td>Excellent</td><td style="color:var(--muted);font-size:0.85rem">Compound scaling</td></tr>
+          <tr><td><strong>DETR</strong></td><td style="color:var(--muted);font-size:0.85rem">Facebook AI</td><td><span class="pill pill-yellow">Moderate</span></td><td>Very Good</td><td style="color:var(--muted);font-size:0.85rem">Transformer-based NMS-free</td></tr>
+          <tr><td><strong>YOLOv8</strong></td><td style="color:var(--muted);font-size:0.85rem">Ultralytics</td><td><span class="pill pill-blue" style="box-shadow:0 0 8px rgba(67,97,238,0.5)">Very Fast</span></td><td><strong style="color:#70f0c8">Excellent</strong></td><td style="color:var(--muted);font-size:0.85rem">Anchor-free single-pass</td></tr>
+          <tr><td><strong>RT-DETR</strong></td><td style="color:var(--muted);font-size:0.85rem">Baidu</td><td><span class="pill pill-green">Fast</span></td><td>Excellent</td><td style="color:var(--muted);font-size:0.85rem">Real-time transformer</td></tr>
+          <tr><td><strong>CenterNet</strong></td><td style="color:var(--muted);font-size:0.85rem">Princeton</td><td><span class="pill pill-green">Fast</span></td><td>Good</td><td style="color:var(--muted);font-size:0.85rem">Keypoint-based anchor-free</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight hl-green">
+      <strong style="color:#06d6a0">Notice:</strong> YOLO achieves "Very Fast + Excellent" &mdash; the only model in this table to combine both extremes. This is why it dominates real-world deployment.
+    </div>
+  </div>
+
+  <!-- S6: INFERENCE TIME COMPARISON -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(255,183,3,0.2);color:#ffb703">6</div>
+      <div>
+        <h2>Inference Time Comparison</h2>
+        <p>GPU V100, COCO dataset benchmark</p>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Model</th><th>Inference Time</th><th>FPS</th><th>mAP</th><th>Priority</th></tr></thead>
+        <tbody>
+          <tr><td><strong>R-CNN</strong></td><td><span class="pill pill-red">~47,000ms</span></td><td>&lt;1</td><td>~66%</td><td style="color:var(--muted);font-size:0.85rem">Accuracy (historical)</td></tr>
+          <tr><td><strong>Fast R-CNN</strong></td><td><span class="pill pill-red">~2,300ms</span></td><td>&lt;1</td><td>~70%</td><td style="color:var(--muted);font-size:0.85rem">Accuracy</td></tr>
+          <tr><td><strong>Faster R-CNN</strong></td><td><span class="pill pill-orange">~73ms</span></td><td>~14</td><td>~73%</td><td style="color:var(--muted);font-size:0.85rem">Balanced</td></tr>
+          <tr><td><strong>SSD300</strong></td><td><span class="pill pill-green">~13ms</span></td><td>~77</td><td>~74%</td><td style="color:var(--muted);font-size:0.85rem">Speed</td></tr>
+          <tr><td><strong>YOLOv3</strong></td><td><span class="pill pill-yellow">~22ms</span></td><td>~45</td><td>~57%</td><td style="color:var(--muted);font-size:0.85rem">Real-time</td></tr>
+          <tr><td><strong>YOLOv5s</strong></td><td><span class="pill pill-green">~6.4ms</span></td><td>~156</td><td>~56%</td><td style="color:var(--muted);font-size:0.85rem">Fast</td></tr>
+          <tr><td><strong>RetinaNet</strong></td><td><span class="pill pill-orange">~80ms</span></td><td>~12</td><td>~76%</td><td style="color:var(--muted);font-size:0.85rem">Accuracy</td></tr>
+          <tr><td><strong>EfficientDet-D0</strong></td><td><span class="pill pill-green">~16ms</span></td><td>~62</td><td>~77%</td><td style="color:var(--muted);font-size:0.85rem">Balanced</td></tr>
+          <tr><td><strong>CenterNet</strong></td><td><span class="pill pill-yellow">~28ms</span></td><td>~35</td><td>~72%</td><td style="color:var(--muted);font-size:0.85rem">Anchor-free</td></tr>
+          <tr><td><strong>DETR</strong></td><td><span class="pill pill-yellow">~52ms</span></td><td>~19</td><td>~75%</td><td style="color:var(--muted);font-size:0.85rem">Transformer</td></tr>
+          <tr><td><strong>YOLOv8n</strong></td><td><span class="pill pill-green">~6ms</span></td><td>~166</td><td>~37% COCO</td><td style="color:var(--muted);font-size:0.85rem">Nano/edge</td></tr>
+          <tr><td><strong>RT-DETR-L</strong></td><td><span class="pill pill-yellow">~32ms</span></td><td>~31</td><td>~80%</td><td style="color:var(--muted);font-size:0.85rem">Best accuracy</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <h3 style="color:#90a8ff">What is FPS?</h3>
+        <p style="font-size:0.88rem;color:var(--muted)">Frames Per Second &mdash; how many images the model can process in 1 second.</p>
+        <div class="formula" style="margin-top:10px">FPS = 1000ms / Inference Time</div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:8px">Higher = faster. Real-time video requires at least 24&ndash;30 FPS.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:#ffc060">What does ~ mean?</h3>
+        <p style="font-size:0.88rem;color:var(--muted)">The tilde (~) means "approximately". These benchmarks vary by hardware, batch size, and implementation. They give <strong style="color:#ffb703">relative comparisons</strong>, not exact values.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:#ff80b0">What does &lt; mean?</h3>
+        <p style="font-size:0.88rem;color:var(--muted)">The less-than sign (&lt;) means "less than". "&lt;1 FPS" means under 1 frame per second &mdash; essentially <strong style="color:#f72585">not real-time capable</strong>.</p>
+      </div>
+      <div class="card">
+        <h3 style="color:#70f0c8">What is mAP?</h3>
+        <p style="font-size:0.88rem;color:var(--muted)">Mean Average Precision &mdash; the standard accuracy metric for object detection. Considers both <strong style="color:#06d6a0">precision</strong> (are detections correct?) and <strong style="color:#06d6a0">recall</strong> (did we find all objects?). Higher = better. Calculated across all object classes on COCO dataset.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>FPS Comparison (top models)</h3>
+      <div style="margin-top:8px">
+        <div class="prob-row"><div class="prob-label"><span><strong>YOLOv8n</strong></span><span style="color:#06d6a0;font-weight:700">166 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:100%;background:linear-gradient(90deg,#06d6a0,#4aefc0)"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>YOLOv5s</span><span style="color:#4361ee;font-weight:700">156 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:94%;background:#4361ee"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>SSD300</span><span style="color:#4361ee;font-weight:700">77 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:46%;background:#4361ee"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>EfficientDet-D0</span><span style="color:#ffb703;font-weight:700">62 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:37%;background:#ffb703"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>YOLOv3</span><span style="color:#ffb703;font-weight:700">45 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:27%;background:#ffb703"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>CenterNet</span><span style="color:#fb8500;font-weight:700">35 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:21%;background:#fb8500"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>RT-DETR-L</span><span style="color:#fb8500;font-weight:700">31 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:19%;background:#fb8500"></div></div></div>
+        <div class="prob-row" style="margin-top:10px"><div class="prob-label"><span>Faster R-CNN</span><span style="color:#ef233c;font-weight:700">14 FPS</span></div><div class="prob-bar-bg"><div class="prob-bar" style="width:8%;background:#ef233c"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PART 2 — YOLOv8n DEEP DIVE ══ -->
+  <div style="padding:24px 0 10px;margin:0;display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--border);border-top:3px solid rgba(67,97,238,.4)">
+    <div style="width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.4rem;background:rgba(67,97,238,.2);color:#90a8ff;flex-shrink:0">2</div>
+    <div><h2 style="font-size:clamp(1.3rem,3vw,1.9rem);font-weight:800;color:#90a8ff">YOLOv8n — Deep Dive</h2><p style="color:var(--muted);font-size:.9rem;margin-top:2px">Backbone · Neck · Head · SPPF · Anchor-free · Loss · Inference pipeline</p></div>
+  </div>
+
+  <!-- S7 -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(0,180,216,.2);color:#70d8f0">7</div>
+      <div><h2>What is YOLOv8n?</h2><p>Nano variant of Ultralytics' YOLOv8 — smallest and fastest in the family</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Key facts</h3>
+        <table>
+          <tr><th>Property</th><th>Value</th></tr>
+          <tr><td>Developer</td><td><span class="pill pill-green">Ultralytics</span></td></tr>
+          <tr><td>Released</td><td>January 2023</td></tr>
+          <tr><td>Variant</td><td><strong style="color:#70d8f0">n = nano</strong> (smallest)</td></tr>
+          <tr><td>Parameters</td><td><strong style="color:#ffb703">3.2 Million</strong></td></tr>
+          <tr><td>mAP COCO</td><td><strong style="color:#06d6a0">37.3%</strong></td></tr>
+          <tr><td>Speed (A100)</td><td><strong style="color:#06d6a0">~312 FPS</strong></td></tr>
+          <tr><td>Input size</td><td>640 × 640 × 3</td></tr>
+          <tr><td>Detection</td><td><span class="pill pill-blue">Anchor-free</span></td></tr>
+          <tr><td>Head type</td><td><span class="pill pill-purple">Decoupled</span></td></tr>
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="border-color:rgba(6,214,160,.3)">
+          <h3>YOLOv8 family — 5 sizes</h3>
+          <div class="bar-row" style="margin-top:8px">
+            <div class="bar-label"><span><strong style="color:#70d8f0">n</strong> nano</span><span style="color:#70d8f0">3.2M · 37.3%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:15%;background:#00b4d8"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span><strong style="color:#06d6a0">s</strong> small</span><span style="color:#06d6a0">11.2M · 44.9%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:35%;background:#06d6a0"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span><strong style="color:#ffb703">m</strong> medium</span><span style="color:#ffb703">25.9M · 50.2%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:55%;background:#ffb703"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span><strong style="color:#fb8500">l</strong> large</span><span style="color:#fb8500">43.7M · 52.9%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:75%;background:#fb8500"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label"><span><strong style="color:#f72585">x</strong> xlarge</span><span style="color:#f72585">68.2M · 53.9%</span></div>
+            <div class="bar-bg"><div class="bar-fill" style="width:100%;background:#f72585"></div></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Tasks YOLOv8 supports</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <span class="pill pill-blue">Object Detection</span>
+            <span class="pill pill-green">Segmentation</span>
+            <span class="pill pill-pink">Pose Estimation</span>
+            <span class="pill pill-orange">Classification</span>
+          </div>
+          <p style="margin-top:10px;font-size:.85rem;color:var(--muted)">One unified framework — switch tasks by model suffix: yolov8n.pt / yolov8n-seg.pt / yolov8n-pose.pt</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S8 -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(67,97,238,.2);color:#90a8ff">8</div>
+      <div><h2>Architecture Overview</h2><p>Three blocks: Backbone → Neck → Head with full shape transformations</p></div>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:260px;display:flex;flex-direction:column;align-items:center;gap:0">
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;font-size:.95rem;background:rgba(67,97,238,.15);border:1px solid rgba(67,97,238,.3);color:#90a8ff">📷 Input Image<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">640 × 640 × 3</div></div>
+        <div style="width:2px;height:26px;background:var(--border)"></div>
         <div style="padding:4px 8px;background:rgba(247,37,133,.08);border:1px dashed rgba(247,37,133,.3);border-radius:8px;font-size:.72rem;color:#ff80b0;text-align:center;width:100%;max-width:500px">── BACKBONE (CSPDarknet + C2f) ──</div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv1<div class="pipe-sub">320 × 320 × 32</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv2 + C2f-1<div class="pipe-sub">160 × 160 × 64</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv3 + C2f-2<div class="pipe-sub">80 × 80 × 128  ← P3 (small objects)</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv4 + C2f-3<div class="pipe-sub">40 × 40 × 256  ← P4 (medium objects)</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.35);color:#ff80b0">Conv5 + C2f-4 + SPPF<div class="pipe-sub">20 × 20 × 512  ← P5 (large objects)</div></div>
-        <div class="pipe-arrow"></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv1 + Conv2 + C2f<div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">320×320×32 → 160×160×64</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv3 + C2f-2 <span style="font-size:.72rem;background:rgba(6,214,160,.15);color:#70f0c8;padding:2px 6px;border-radius:4px">P3</span><div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">80 × 80 × 128 ← small objects</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Conv4 + C2f-3 <span style="font-size:.72rem;background:rgba(255,183,3,.15);color:#ffb703;padding:2px 6px;border-radius:4px">P4</span><div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">40 × 40 × 256 ← medium objects</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.35);color:#ff80b0">Conv5 + C2f-4 + SPPF <span style="font-size:.72rem;background:rgba(114,9,183,.2);color:#c890ff;padding:2px 6px;border-radius:4px">P5</span><div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">20 × 20 × 512 ← large objects</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
         <div style="padding:4px 8px;background:rgba(6,214,160,.08);border:1px dashed rgba(6,214,160,.3);border-radius:8px;font-size:.72rem;color:#70f0c8;text-align:center;width:100%;max-width:500px">── NECK (PAN-FPN) ──</div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Upsample P5 + fuse P4 → C2f<div class="pipe-sub">40 × 40 × 256</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Upsample P4 + fuse P3 → C2f<div class="pipe-sub">80 × 80 × 128</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Downsample + fuse → C2f (×2)<div class="pipe-sub">40×40×256 and 20×20×512</div></div>
-        <div class="pipe-arrow"></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Upsample + Fuse + C2f (×2)<div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">80×80×128 · 40×40×256 · 20×20×512</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
         <div style="padding:4px 8px;background:rgba(114,9,183,.1);border:1px dashed rgba(114,9,183,.3);border-radius:8px;font-size:.72rem;color:#c890ff;text-align:center;width:100%;max-width:500px">── HEAD (Decoupled, Anchor-Free) ──</div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(114,9,183,.15);border:1px solid rgba(114,9,183,.3);color:#c890ff">3 Detection Scales<div class="pipe-sub">80×80 (small) · 40×40 (medium) · 20×20 (large)</div></div>
-        <div class="pipe-arrow"></div>
-        <div class="pipe-box" style="background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0;font-weight:800">Output: Boxes + Classes<div class="pipe-sub">x,y,w,h + confidence + class scores</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:12px 20px;text-align:center;font-weight:600;font-size:.88rem;background:rgba(114,9,183,.15);border:1px solid rgba(114,9,183,.3);color:#c890ff">3 Detection Scales<div style="font-size:.75rem;font-weight:400;opacity:.8;margin-top:3px">80×80 (small) · 40×40 (medium) · 20×20 (large)</div></div>
+        <div style="width:2px;height:20px;background:var(--border)"></div>
+        <div style="width:100%;max-width:500px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:800;font-size:.95rem;background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0">✅ Output: Boxes + Classes<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">x,y,w,h + confidence + class scores</div></div>
+      </div>
+      <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:14px">
+        <div class="card" style="border-color:rgba(247,37,133,.3)"><h3 style="color:#ff80b0">Backbone</h3><p style="font-size:.85rem;color:var(--muted)">Extracts features at 3 spatial scales. Deep layers = semantic meaning. Shallow layers = spatial detail.</p></div>
+        <div class="card" style="border-color:rgba(6,214,160,.3)"><h3 style="color:#70f0c8">Neck (PAN-FPN)</h3><p style="font-size:.85rem;color:var(--muted)">Merges features top-down and bottom-up. Every scale gets both "what is it" and "where is it" info.</p></div>
+        <div class="card" style="border-color:rgba(114,9,183,.3)"><h3 style="color:#c890ff">Head</h3><p style="font-size:.85rem;color:var(--muted)">Two separate branches per scale: one predicts class, one predicts box coordinates. Anchor-free.</p></div>
+        <div class="card">
+          <h3>Shape summary</h3>
+          <table>
+            <tr><th>Stage</th><th>Shape</th></tr>
+            <tr><td>Input</td><td><span class="pill pill-blue">640×640×3</span></td></tr>
+            <tr><td>P3 (small obj)</td><td><span class="pill pill-pink">80×80×128</span></td></tr>
+            <tr><td>P4 (med obj)</td><td><span class="pill pill-pink">40×40×256</span></td></tr>
+            <tr><td>P5 (large obj)</td><td><span class="pill pill-pink">20×20×512</span></td></tr>
+            <tr><td>Head output</td><td><span class="pill pill-green">3 scales</span></td></tr>
+          </table>
+        </div>
       </div>
     </div>
-    <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:14px">
-      <div class="card" style="border-color:rgba(247,37,133,.3)">
-        <h3 style="color:#ff80b0">Backbone</h3>
-        <p style="font-size:.85rem;color:var(--muted)">Extracts features at 3 spatial scales. Deep layers = semantic meaning. Shallow layers = spatial detail.</p>
-      </div>
-      <div class="card" style="border-color:rgba(6,214,160,.3)">
-        <h3 style="color:#70f0c8">Neck (PAN-FPN)</h3>
-        <p style="font-size:.85rem;color:var(--muted)">Merges features top-down and bottom-up. Every scale gets both "what is it" and "where is it" info.</p>
-      </div>
-      <div class="card" style="border-color:rgba(114,9,183,.3)">
-        <h3 style="color:#c890ff">Head</h3>
-        <p style="font-size:.85rem;color:var(--muted)">Two separate branches per scale: one predicts class, one predicts box coordinates. Anchor-free.</p>
+  </div>
+
+  <!-- S9 -->
+  <div class="section" id="s9">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(247,37,133,.2);color:#ff80b0">9</div>
+      <div><h2>Backbone — CSPDarknet + C2f</h2><p>Feature extraction: from pixels to rich semantic feature maps</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>CSP — Cross Stage Partial</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Splits feature map into 2 paths — heavy conv on one, direct skip on the other — then merges both. Half the computation, same accuracy.</p>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+            <div style="padding:8px;background:rgba(247,37,133,.12);border:1px solid rgba(247,37,133,.3);border-radius:8px;font-size:.78rem;color:#ff80b0;text-align:center">Branch A — Heavy Conv<br>Bottleneck 1 → Bottleneck 2</div>
+          </div>
+          <div style="flex:1">
+            <div style="padding:8px;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);border-radius:8px;font-size:.78rem;color:#70f0c8;text-align:center">Branch B — Direct skip (no conv)</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;padding:8px;background:rgba(255,183,3,.1);border:1px solid rgba(255,183,3,.25);border-radius:8px;font-size:.82rem;color:#ffb703;text-align:center">Concat → Conv → Output</div>
+        <div class="callout" style="margin-top:12px"><div class="callout-icon">💡</div><div class="callout-text">Branch B is a <strong>gradient highway</strong> — backpropagation flows through it cleanly, improving training stability.</div></div>
       </div>
       <div class="card">
-        <h3>Shape summary</h3>
+        <h3>C2f — Cross Stage Partial with 2 Flows</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">YOLOv8's improved C3 (YOLOv5). More gradient paths = richer learning.</p>
+        <div class="code"><span class="c-muted">Input</span>
+  <span class="c-blue">↓ split</span>
+<span class="c-green">Flow 1</span> → direct
+<span class="c-yellow">Flow 2</span> → Bottleneck 1
+            → Bottleneck 2 ...
+<span class="c-muted">All outputs</span>
+  <span class="c-blue">↓ concat</span>
+<span class="c-white">Conv → Output</span></div>
+        <div class="highlight hl-green" style="margin-top:12px;font-size:.85rem">More gradient flow paths → better accuracy than C3 at the same speed.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <h3>SiLU Activation (used throughout)</h3>
+      <div class="grid-2">
+        <div>
+          <div class="formula">SiLU(x) = x × sigmoid(x) = x / (1 + e⁻ˣ)</div>
+          <p style="font-size:.85rem;color:var(--muted);margin-top:8px">Smoother than ReLU — negatives dampened, not killed. Better gradient flow → higher accuracy.</p>
+        </div>
         <table>
-          <tr><th>Stage</th><th>Shape</th></tr>
-          <tr><td>Input</td><td><span class="pill pill-blue">640×640×3</span></td></tr>
-          <tr><td>After Conv2</td><td><span class="pill pill-pink">160×160×64</span></td></tr>
-          <tr><td>P3 (small)</td><td><span class="pill pill-pink">80×80×128</span></td></tr>
-          <tr><td>P4 (medium)</td><td><span class="pill pill-pink">40×40×256</span></td></tr>
-          <tr><td>P5 (large)</td><td><span class="pill pill-pink">20×20×512</span></td></tr>
-          <tr><td>Head out</td><td><span class="pill pill-green">3 scales</span></td></tr>
+          <tr><th>Input</th><th>ReLU</th><th>SiLU</th></tr>
+          <tr><td>-3</td><td style="color:#ef233c">0</td><td style="color:#ffb703">-0.14</td></tr>
+          <tr><td>-1</td><td style="color:#ef233c">0</td><td style="color:#ffb703">-0.27</td></tr>
+          <tr><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>1</td><td style="color:#06d6a0">1</td><td style="color:#06d6a0">0.73</td></tr>
+          <tr><td>3</td><td style="color:#06d6a0">3</td><td style="color:#06d6a0">2.86</td></tr>
         </table>
       </div>
     </div>
   </div>
-</div>
 
-<!-- S9 — BACKBONE -->
-<div class="section" id="s9">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(247,37,133,.2);color:#ff80b0">9</div>
-    <div><h2>Backbone — CSPDarknet + C2f</h2><p>Feature extraction engine: from pixels to rich semantic feature maps</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <h3>CSP — Cross Stage Partial Network</h3>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">CSP splits the feature map into two paths so heavy computation only runs on one — then merges both.</p>
-      <div style="display:flex;gap:14px;align-items:flex-start">
-        <div style="flex:1;text-align:center">
-          <div style="padding:8px;background:rgba(67,97,238,.15);border:1px solid rgba(67,97,238,.3);border-radius:8px;font-size:.82rem;color:#90a8ff;margin-bottom:6px">Input feature map</div>
-          <div style="display:flex;gap:6px;justify-content:center">
-            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
-              <div style="padding:6px;background:rgba(247,37,133,.12);border:1px solid rgba(247,37,133,.3);border-radius:6px;font-size:.75rem;color:#ff80b0;text-align:center">Branch A<br>Heavy Conv</div>
-              <div style="padding:6px;background:rgba(247,37,133,.08);border:1px solid rgba(247,37,133,.2);border-radius:6px;font-size:.75rem;color:#ff80b0;text-align:center">Bottleneck 1</div>
-              <div style="padding:6px;background:rgba(247,37,133,.08);border:1px solid rgba(247,37,133,.2);border-radius:6px;font-size:.75rem;color:#ff80b0;text-align:center">Bottleneck 2</div>
-            </div>
-            <div style="flex:1">
-              <div style="padding:6px;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);border-radius:6px;font-size:.75rem;color:#70f0c8;text-align:center">Branch B<br>Direct skip<br>(no conv)</div>
-            </div>
-          </div>
-          <div style="padding:8px;background:rgba(255,183,3,.1);border:1px solid rgba(255,183,3,.3);border-radius:8px;font-size:.82rem;color:#ffb703;margin-top:6px">Concat → Conv → Output</div>
-        </div>
-      </div>
-      <div class="callout" style="margin-top:14px">
-        <div class="callout-icon">💡</div>
-        <div class="callout-text">Half the computation, same accuracy. Branch B acts as a gradient highway for backpropagation.</div>
-      </div>
+  <!-- S10 -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(6,214,160,.2);color:#70f0c8">10</div>
+      <div><h2>Neck — PAN-FPN</h2><p>Fuses multi-scale features so objects of all sizes are detected well</p></div>
     </div>
-    <div class="card">
-      <h3>C2f — Cross Stage Partial with 2 Flows</h3>
-      <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">YOLOv8's improved version of C3 (YOLOv5). More gradient paths = richer learning.</p>
-      <div class="code"><span class="c-m">Input</span>
-  <span class="c-b">↓ split into 2</span>
-<span class="c-g">Branch 1</span> → direct (skip)
-<span class="c-y">Branch 2</span> → Bottleneck 1
-              → Bottleneck 2
-              → ...
-<span class="c-m">All intermediate outputs</span>
-  <span class="c-b">↓ concat together</span>
-<span class="c-c">Conv</span> → Output</div>
-      <div class="highlight hl-green" style="margin-top:12px;font-size:.85rem">More gradient flow paths → better feature learning → higher accuracy than C3 at same speed.</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <h3>SiLU Activation (used throughout YOLOv8)</h3>
     <div class="grid-2">
-      <div>
-        <div class="formula">SiLU(x) = x × sigmoid(x) = x / (1 + e⁻ˣ)</div>
-        <p style="font-size:.85rem;color:var(--muted);margin-top:8px">Smoother than ReLU — negative values are not completely killed, just dampened. Leads to better gradient flow and higher accuracy.</p>
+      <div class="card">
+        <h3>Why a Neck is needed</h3>
+        <table>
+          <tr><th>Scale</th><th>Grid</th><th>Cell size</th><th>Good for</th></tr>
+          <tr><td><span class="pill pill-pink">P3</span></td><td>80×80</td><td>8 px</td><td><strong style="color:#06d6a0">Small objects</strong></td></tr>
+          <tr><td><span class="pill pill-orange">P4</span></td><td>40×40</td><td>16 px</td><td><strong style="color:#ffb703">Medium objects</strong></td></tr>
+          <tr><td><span class="pill pill-purple">P5</span></td><td>20×20</td><td>32 px</td><td><strong style="color:#c890ff">Large objects</strong></td></tr>
+        </table>
+        <p style="margin-top:10px;font-size:.85rem;color:var(--muted)">The neck enriches each scale with information from the others so all sizes benefit from both context and detail.</p>
       </div>
-      <table>
-        <tr><th>Input</th><th>ReLU</th><th>SiLU</th></tr>
-        <tr><td>-3</td><td style="color:#ef233c">0</td><td style="color:#ffb703">-0.14</td></tr>
-        <tr><td>-1</td><td style="color:#ef233c">0</td><td style="color:#ffb703">-0.27</td></tr>
-        <tr><td>0</td><td>0</td><td>0</td></tr>
-        <tr><td>1</td><td style="color:#06d6a0">1</td><td style="color:#06d6a0">0.73</td></tr>
-        <tr><td>3</td><td style="color:#06d6a0">3</td><td style="color:#06d6a0">2.86</td></tr>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- S10 — NECK -->
-<div class="section" id="s10">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(6,214,160,.2);color:#70f0c8">10</div>
-    <div><h2>Neck — PAN-FPN</h2><p>Fuses multi-scale features so all object sizes are detected accurately</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <h3>Why a Neck is needed</h3>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">The backbone's different layers see the image at different resolutions:</p>
-      <table>
-        <tr><th>Feature map</th><th>Grid</th><th>Cell size</th><th>Good for</th></tr>
-        <tr><td><span class="pill pill-pink">P3</span></td><td>80×80</td><td>8px</td><td><strong style="color:#06d6a0">Small objects</strong></td></tr>
-        <tr><td><span class="pill pill-orange">P4</span></td><td>40×40</td><td>16px</td><td><strong style="color:#ffb703">Medium objects</strong></td></tr>
-        <tr><td><span class="pill pill-purple">P5</span></td><td>20×20</td><td>32px</td><td><strong style="color:#c890ff">Large objects</strong></td></tr>
-      </table>
-      <p style="margin-top:12px;font-size:.85rem;color:var(--muted)">The neck enriches each scale with information from the others so even small scales know about context and large scales keep fine detail.</p>
-    </div>
-    <div class="card">
-      <h3>FPN + PAN — two pathways</h3>
-      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-        <div style="padding:10px 14px;background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.25);border-radius:8px">
-          <div style="color:#90a8ff;font-weight:700;font-size:.88rem">↓ FPN (top-down)</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:3px">Deep semantic features flow from P5 → P4 → P3 via upsampling + concatenation</div>
-        </div>
-        <div style="padding:10px 14px;background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-radius:8px">
-          <div style="color:#70f0c8;font-weight:700;font-size:.88rem">↑ PAN (bottom-up)</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:3px">Spatial detail flows back from P3 → P4 → P5 via downsampling + concatenation</div>
-        </div>
-        <div style="padding:10px 14px;background:rgba(255,183,3,.08);border:1px solid rgba(255,183,3,.2);border-radius:8px">
-          <div style="color:#ffb703;font-weight:700;font-size:.88rem">= Result: enriched features at all 3 scales</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:3px">Each scale now has both semantic (WHAT) and spatial (WHERE) information</div>
+      <div class="card">
+        <h3>FPN + PAN — two pathways</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+          <div style="padding:12px;background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.25);border-radius:8px"><div style="color:#90a8ff;font-weight:700;font-size:.88rem">↓ FPN (top-down)</div><div style="font-size:.82rem;color:var(--muted);margin-top:3px">Deep semantic features flow P5 → P4 → P3 via upsampling + concat</div></div>
+          <div style="padding:12px;background:rgba(6,214,160,.08);border:1px solid rgba(6,214,160,.2);border-radius:8px"><div style="color:#70f0c8;font-weight:700;font-size:.88rem">↑ PAN (bottom-up)</div><div style="font-size:.82rem;color:var(--muted);margin-top:3px">Spatial detail flows back P3 → P4 → P5 via downsampling + concat</div></div>
+          <div style="padding:12px;background:rgba(255,183,3,.08);border:1px solid rgba(255,183,3,.2);border-radius:8px"><div style="color:#ffb703;font-weight:700;font-size:.88rem">= Enriched features at all 3 scales</div><div style="font-size:.82rem;color:var(--muted);margin-top:3px">Each scale has both WHAT (semantic) and WHERE (spatial) information</div></div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- S11 — HEAD -->
-<div class="section" id="s11">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(114,9,183,.2);color:#c890ff">11</div>
-    <div><h2>Head — Decoupled & Anchor-Free</h2><p>Two major innovations that make YOLOv8 more accurate than previous versions</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <h3>Innovation 1 — Decoupled Head</h3>
-      <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:130px">
-          <div style="color:var(--muted);font-size:.78rem;margin-bottom:6px;text-align:center">Old: Coupled (v5)</div>
-          <div class="pipeline">
-            <div class="pipe-box" style="background:rgba(239,35,60,.1);border:1px solid rgba(239,35,60,.25);color:#ff8090;max-width:100%;font-size:.82rem">Feature map</div>
-            <div class="pipe-arrow"></div>
-            <div class="pipe-box" style="background:rgba(239,35,60,.08);border:1px solid rgba(239,35,60,.2);color:#ff8090;max-width:100%;font-size:.78rem">Single branch predicts box + class together</div>
-          </div>
-          <div style="margin-top:6px;font-size:.76rem;color:#ff8090;text-align:center">Tasks interfere with each other</div>
-        </div>
-        <div style="flex:1;min-width:130px">
-          <div style="color:var(--muted);font-size:.78rem;margin-bottom:6px;text-align:center">New: Decoupled (v8)</div>
-          <div style="display:flex;gap:6px">
-            <div style="flex:1;text-align:center">
-              <div style="padding:6px;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.3);border-radius:8px;font-size:.74rem;color:#70f0c8">Classification<br>branch<br>(What?)</div>
-            </div>
-            <div style="flex:1;text-align:center">
-              <div style="padding:6px;background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);border-radius:8px;font-size:.74rem;color:#90a8ff">Regression<br>branch<br>(Where?)</div>
-            </div>
-          </div>
-          <div style="margin-top:6px;font-size:.76rem;color:#70f0c8;text-align:center">Each task optimises independently</div>
-        </div>
-      </div>
+  <!-- S11 -->
+  <div class="section" id="s11">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(114,9,183,.2);color:#c890ff">11</div>
+      <div><h2>Head — Decoupled & Anchor-Free</h2><p>Two innovations that make YOLOv8 more accurate than older YOLO versions</p></div>
     </div>
-    <div class="card">
-      <h3>Innovation 2 — Anchor-Free</h3>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
-        <div style="flex:1;min-width:120px;padding:12px;background:rgba(239,35,60,.07);border:1px solid rgba(239,35,60,.2);border-radius:8px">
-          <div style="color:#ff8090;font-weight:700;font-size:.83rem;margin-bottom:6px">Anchor-based (v5)</div>
-          <div style="font-size:.8rem;color:var(--muted)">Pre-defined anchor box sizes for each cell. Model predicts offsets from anchors. Anchors must be tuned per dataset using k-means.</div>
-        </div>
-        <div style="flex:1;min-width:120px;padding:12px;background:rgba(6,214,160,.07);border:1px solid rgba(6,214,160,.2);border-radius:8px">
-          <div style="color:#70f0c8;font-weight:700;font-size:.83rem;margin-bottom:6px">Anchor-free (v8)</div>
-          <div style="font-size:.8rem;color:var(--muted)">Directly predicts center x, y, width, height from scratch. No preset shapes needed. Works better across diverse datasets.</div>
-        </div>
-      </div>
-      <div class="formula" style="margin-top:12px;font-size:.82rem">Task-Aligned Assigner (TAL) assigns best grid cells to each object automatically</div>
-    </div>
-  </div>
-</div>
-
-<!-- S12 — SPPF -->
-<div class="section" id="s12">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(255,183,3,.2);color:#ffb703">12</div>
-    <div><h2>SPPF Module</h2><p>Spatial Pyramid Pooling Fast — captures multi-scale context at end of backbone</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <h3>What SPPF does</h3>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">Applied at the deepest backbone layer (20×20×512). Captures context from multiple receptive field sizes without changing spatial dimensions.</p>
-      <div class="code"><span class="c-m">Input: 20×20×512</span>
-  <span class="c-b">↓</span>
-<span class="c-y">MaxPool(5×5)</span> → 20×20×512
-  <span class="c-b">↓</span>
-<span class="c-y">MaxPool(5×5)</span> → 20×20×512
-  <span class="c-b">↓</span>
-<span class="c-y">MaxPool(5×5)</span> → 20×20×512
-  <span class="c-b">↓</span>
-<span class="c-g">Concat all 4</span> → 20×20×2048
-  <span class="c-b">↓</span>
-<span class="c-c">Conv(1×1)</span>    → 20×20×512</div>
-    </div>
-    <div class="card">
-      <h3>SPPF vs SPP</h3>
-      <table>
-        <tr><th>Property</th><th>SPP (old)</th><th>SPPF (new)</th></tr>
-        <tr><td>Pool type</td><td>3 parallel pools</td><td>3 series pools</td></tr>
-        <tr><td>Pool sizes</td><td>5×5, 9×9, 13×13</td><td>5×5 × 3 times</td></tr>
-        <tr><td>Speed</td><td>Slower</td><td style="color:#06d6a0"><strong>2× faster</strong></td></tr>
-        <tr><td>Result</td><td>Same</td><td style="color:#06d6a0">Same accuracy</td></tr>
-      </table>
-      <div class="callout" style="margin-top:14px">
-        <div class="callout-icon">💡</div>
-        <div class="callout-text">Three serial MaxPools of size 5×5 effectively cover receptive fields of 5, 9, and 13 — identical to SPP but 2× faster.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- S13 — ANCHOR-FREE DETAIL -->
-<div class="section" id="s13">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(0,180,216,.2);color:#70d8f0">13</div>
-    <div><h2>Anchor-Free vs Anchor-Based</h2><p>A concrete comparison of how boxes are predicted</p></div>
-  </div>
-  <div class="grid-2">
-    <div class="card" style="border-color:rgba(239,35,60,.3)">
-      <h3 style="color:#ff8090">Anchor-Based (YOLOv5)</h3>
-      <div class="code" style="font-size:.8rem"><span class="c-m">Step 1: Pre-compute 3 anchors per scale</span>
-<span class="c-m">  (k-means on dataset bounding boxes)</span>
-<span class="c-p">  Anchor 1: [10×13]  ← small</span>
-<span class="c-p">  Anchor 2: [33×23]  ← medium</span>
-<span class="c-p">  Anchor 3: [116×90] ← large</span>
-
-<span class="c-m">Step 2: Model predicts offsets</span>
-<span class="c-y">  tx, ty</span> <span class="c-m">← offset from anchor center</span>
-<span class="c-y">  tw, th</span> <span class="c-m">← scale factor of anchor size</span>
-
-<span class="c-m">Step 3: Final box</span>
-<span class="c-g">  bx = sigmoid(tx) + cx</span>
-<span class="c-g">  by = sigmoid(ty) + cy</span>
-<span class="c-g">  bw = anchor_w × e^tw</span>
-<span class="c-g">  bh = anchor_h × e^th</span></div>
-      <div style="margin-top:10px;padding:10px;background:rgba(239,35,60,.07);border-radius:8px;font-size:.82rem;color:#ff8090">Problem: anchors must be recalculated for every new dataset</div>
-    </div>
-    <div class="card" style="border-color:rgba(6,214,160,.3)">
-      <h3 style="color:#70f0c8">Anchor-Free (YOLOv8)</h3>
-      <div class="code" style="font-size:.8rem"><span class="c-m">No pre-computation needed!</span>
-
-<span class="c-m">Model directly predicts:</span>
-<span class="c-g">  cx, cy</span> <span class="c-m">← center of box</span>
-<span class="c-g">  w, h</span>   <span class="c-m">← width and height</span>
-
-<span class="c-m">Uses Distribution Focal Loss (DFL):</span>
-<span class="c-c">  Instead of single value,</span>
-<span class="c-c">  predicts probability distribution</span>
-<span class="c-c">  of possible edge positions</span>
-<span class="c-c">  → more accurate box edges</span>
-
-<span class="c-m">Task-Aligned Assigner (TAL):</span>
-<span class="c-y">  Dynamically assigns which cells</span>
-<span class="c-y">  are responsible for each object</span></div>
-      <div style="margin-top:10px;padding:10px;background:rgba(6,214,160,.07);border-radius:8px;font-size:.82rem;color:#70f0c8">Works out-of-the-box on any dataset — no anchor tuning</div>
-    </div>
-  </div>
-</div>
-
-<!-- S14 — LOSS FUNCTIONS -->
-<div class="section" id="s14">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(239,35,60,.2);color:#ff8090">14</div>
-    <div><h2>Loss Functions</h2><p>Three components tell the model how wrong it was during training</p></div>
-  </div>
-  <div class="grid-3">
-    <div class="card" style="border-color:rgba(247,37,133,.3)">
-      <h3 style="color:#ff80b0">Classification Loss</h3>
-      <div class="pill pill-pink" style="margin-bottom:10px">Binary Cross-Entropy</div>
-      <p style="font-size:.85rem;color:var(--muted)">Is this class present? YES or NO per class independently. Allows multi-label detection (one box can be multiple classes).</p>
-      <div class="formula" style="font-size:.78rem;margin-top:10px">BCE = −[y·log(p) + (1−y)·log(1−p)]</div>
-    </div>
-    <div class="card" style="border-color:rgba(67,97,238,.3)">
-      <h3 style="color:#90a8ff">Box Regression Loss</h3>
-      <div class="pill pill-blue" style="margin-bottom:10px">CIoU Loss</div>
-      <p style="font-size:.85rem;color:var(--muted)">Measures how well the predicted box overlaps the real box. CIoU includes overlap area + center distance + aspect ratio.</p>
-      <div class="formula" style="font-size:.78rem;margin-top:10px">IoU = Overlap Area / Union Area</div>
-    </div>
-    <div class="card" style="border-color:rgba(6,214,160,.3)">
-      <h3 style="color:#70f0c8">Distribution Focal Loss</h3>
-      <div class="pill pill-green" style="margin-bottom:10px">DFL</div>
-      <p style="font-size:.85rem;color:var(--muted)">For anchor-free box regression. Predicts a distribution of likely edge positions instead of a single value — more robust predictions.</p>
-      <div class="formula" style="font-size:.78rem;margin-top:10px">DFL = −((y₁+1−y)log(pᵢ)+(y−y₀)log(pᵢ₊₁))</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:0">
-    <h3>Total Loss</h3>
-    <div class="formula">Total Loss = λ₁ × BCE_cls + λ₂ × CIoU_box + λ₃ × DFL</div>
-    <div class="grid-3" style="margin-top:14px">
-      <div style="padding:10px;background:rgba(247,37,133,.07);border-radius:8px;text-align:center;font-size:.82rem">
-        <div style="color:#ff80b0;font-weight:700">IoU = 1.0</div>
-        <div style="color:var(--muted);margin-top:4px">Perfect overlap — predicted box exactly matches ground truth</div>
-      </div>
-      <div style="padding:10px;background:rgba(255,183,3,.07);border-radius:8px;text-align:center;font-size:.82rem">
-        <div style="color:#ffb703;font-weight:700">IoU = 0.5</div>
-        <div style="color:var(--muted);margin-top:4px">50% overlap — acceptable but needs improvement</div>
-      </div>
-      <div style="padding:10px;background:rgba(239,35,60,.07);border-radius:8px;text-align:center;font-size:.82rem">
-        <div style="color:#ff8090;font-weight:700">IoU = 0.0</div>
-        <div style="color:var(--muted);margin-top:4px">No overlap — predicted box completely wrong</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- S15 — INFERENCE PIPELINE -->
-<div class="section" id="s15">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(6,214,160,.2);color:#70f0c8">15</div>
-    <div><h2>Full Inference Pipeline</h2><p>Step-by-step: what happens when you feed an image to YOLOv8n</p></div>
-  </div>
-  <div class="pipeline">
-    <div class="pipe-box" style="background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);color:#90a8ff">Step 1 — Pre-process<div class="pipe-sub">Resize to 640×640 · Normalize (÷255) · Add batch dim → shape (1, 3, 640, 640)</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Step 2 — Backbone (CSPDarknet + C2f + SPPF)<div class="pipe-sub">Extract feature maps at P3 (80×80), P4 (40×40), P5 (20×20)</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Step 3 — Neck (PAN-FPN)<div class="pipe-sub">Fuse features top-down and bottom-up across all 3 scales</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(114,9,183,.12);border:1px solid rgba(114,9,183,.28);color:#c890ff">Step 4 — Head (Decoupled, Anchor-free)<div class="pipe-sub">Classification branch + Regression branch independently at each scale</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(255,183,3,.1);border:1px solid rgba(255,183,3,.28);color:#ffb703">Step 5 — Post-process<div class="pipe-sub">Confidence threshold (e.g. 0.25) → filter low-confidence boxes → NMS → remove duplicates</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0;font-weight:800">Output<div class="pipe-sub">[x1, y1, x2, y2, confidence, class_id] per detected object</div></div>
-  </div>
-  <div class="card" style="margin-top:20px">
-    <h3>NMS — Non-Maximum Suppression</h3>
     <div class="grid-2">
-      <div>
-        <div style="margin-bottom:8px;font-size:.85rem;color:var(--muted)">Before NMS — multiple overlapping boxes for same object:</div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <div style="padding:10px 14px;background:rgba(67,97,238,.2);border:2px solid rgba(67,97,238,.5);border-radius:8px;font-size:.82rem;color:#90a8ff">Box A: 95%</div>
-          <div style="padding:10px 14px;background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.3);border-radius:8px;font-size:.82rem;color:#ff80b0">Box B: 82%</div>
-          <div style="padding:10px 14px;background:rgba(251,133,0,.12);border:1px solid rgba(251,133,0,.25);border-radius:8px;font-size:.82rem;color:#ffc060">Box C: 71%</div>
+      <div class="card">
+        <h3>Innovation 1 — Decoupled Head</h3>
+        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:120px">
+            <div style="color:var(--muted);font-size:.76rem;text-align:center;margin-bottom:6px">Old: Coupled (v5)</div>
+            <div style="padding:10px;background:rgba(239,35,60,.08);border:1px solid rgba(239,35,60,.2);border-radius:8px;font-size:.78rem;color:#ff8090;text-align:center">Single branch<br>predicts box + class<br>together → tasks interfere</div>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="color:var(--muted);font-size:.76rem;text-align:center;margin-bottom:6px">New: Decoupled (v8)</div>
+            <div style="display:flex;gap:4px">
+              <div style="flex:1;padding:8px;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.3);border-radius:8px;font-size:.74rem;color:#70f0c8;text-align:center">Cls branch<br>(What?)</div>
+              <div style="flex:1;padding:8px;background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);border-radius:8px;font-size:.74rem;color:#90a8ff;text-align:center">Reg branch<br>(Where?)</div>
+            </div>
+          </div>
         </div>
       </div>
-      <div>
-        <div style="margin-bottom:8px;font-size:.85rem;color:var(--muted)">After NMS — only highest confidence kept:</div>
-        <div style="display:flex;gap:6px;align-items:center">
-          <div style="padding:10px 14px;background:rgba(6,214,160,.2);border:2px solid rgba(6,214,160,.5);border-radius:8px;font-size:.82rem;color:#06d6a0">Box A: 95% ✓ kept</div>
-          <div style="padding:10px 14px;background:rgba(48,54,61,.4);border:1px dashed var(--border);border-radius:8px;font-size:.82rem;color:var(--muted)">B, C removed</div>
+      <div class="card">
+        <h3>Innovation 2 — Anchor-Free</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <div style="flex:1;min-width:110px;padding:10px;background:rgba(239,35,60,.07);border:1px solid rgba(239,35,60,.2);border-radius:8px;font-size:.8rem">
+            <div style="color:#ff8090;font-weight:700;margin-bottom:4px">v5 — Anchor-based</div>
+            <div style="color:var(--muted)">Pre-defined anchor sizes per cell. Model predicts offsets. Anchors must be tuned per dataset.</div>
+          </div>
+          <div style="flex:1;min-width:110px;padding:10px;background:rgba(6,214,160,.07);border:1px solid rgba(6,214,160,.2);border-radius:8px;font-size:.8rem">
+            <div style="color:#70f0c8;font-weight:700;margin-bottom:4px">v8 — Anchor-free</div>
+            <div style="color:var(--muted)">Directly predicts cx, cy, w, h. No preset shapes. Works across diverse datasets out-of-the-box.</div>
+          </div>
         </div>
+        <div class="formula" style="margin-top:12px;font-size:.8rem">Task-Aligned Assigner (TAL) automatically assigns best cells to each object</div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- S16 — VARIANTS -->
-<div class="section" id="s16">
-  <div class="section-header">
-    <div class="step-num" style="background:rgba(251,133,0,.2);color:#ffc060">16</div>
-    <div><h2>YOLOv8n vs Other YOLOs</h2><p>Key architectural differences across versions</p></div>
-  </div>
-  <div class="card">
-    <div style="overflow-x:auto">
-      <table style="min-width:600px">
-        <tr><th>Feature</th><th>v5</th><th>v7</th><th style="color:#70d8f0">v8n ★</th><th>v9</th><th>v10</th></tr>
-        <tr><td>Anchor type</td><td><span class="pill pill-red">Anchor-based</span></td><td><span class="pill pill-red">Anchor-based</span></td><td><span class="pill pill-cyan">Anchor-free</span></td><td><span class="pill pill-cyan">Anchor-free</span></td><td><span class="pill pill-cyan">Anchor-free</span></td></tr>
-        <tr><td>Head type</td><td><span class="pill pill-orange">Coupled</span></td><td><span class="pill pill-orange">Coupled</span></td><td><span class="pill pill-green">Decoupled</span></td><td><span class="pill pill-green">Decoupled</span></td><td><span class="pill pill-green">Decoupled</span></td></tr>
-        <tr><td>Backbone</td><td style="font-size:.82rem">CSPDarknet</td><td style="font-size:.82rem">E-ELAN</td><td style="font-size:.82rem;color:#70d8f0">CSPDarknet+C2f</td><td style="font-size:.82rem">GELAN</td><td style="font-size:.82rem">CSPNet</td></tr>
-        <tr><td>Neck</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem;color:#70d8f0">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td></tr>
-        <tr><td>NMS needed</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td style="color:#06d6a0">No ✓</td></tr>
-        <tr><td>Activation</td><td style="font-size:.82rem">SiLU</td><td style="font-size:.82rem">SiLU</td><td style="font-size:.82rem;color:#70d8f0">SiLU</td><td style="font-size:.82rem">SiLU</td><td style="font-size:.82rem">SiLU</td></tr>
-        <tr><td>Tasks</td><td style="font-size:.82rem">Det, Seg</td><td style="font-size:.82rem">Det only</td><td style="font-size:.82rem;color:#70d8f0">Det, Seg, Pose, Cls</td><td style="font-size:.82rem">Det</td><td style="font-size:.82rem">Det</td></tr>
-        <tr><td>Framework</td><td style="font-size:.82rem">PyTorch</td><td style="font-size:.82rem">PyTorch</td><td style="font-size:.82rem;color:#70d8f0">PyTorch</td><td style="font-size:.82rem">PyTorch</td><td style="font-size:.82rem">PyTorch</td></tr>
-      </table>
+  <!-- S12 -->
+  <div class="section" id="s12">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(255,183,3,.2);color:#ffb703">12</div>
+      <div><h2>SPPF Module</h2><p>Spatial Pyramid Pooling Fast — multi-scale context at end of backbone</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <h3>How SPPF works</h3>
+        <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">Applied at P5 (20×20×512). Captures context at multiple receptive field sizes without changing spatial dimensions.</p>
+        <div class="code"><span class="c-muted">Input: 20×20×512</span>
+  <span class="c-blue">↓</span>
+<span class="c-yellow">MaxPool(5×5)</span> → 20×20×512
+  <span class="c-blue">↓</span>
+<span class="c-yellow">MaxPool(5×5)</span> → 20×20×512
+  <span class="c-blue">↓</span>
+<span class="c-yellow">MaxPool(5×5)</span> → 20×20×512
+  <span class="c-blue">↓</span>
+<span class="c-green">Concat all 4</span> → 20×20×2048
+  <span class="c-blue">↓</span>
+<span class="c-white">Conv(1×1)</span>   → 20×20×512</div>
+      </div>
+      <div class="card">
+        <h3>SPPF vs SPP</h3>
+        <table>
+          <tr><th>Property</th><th>SPP (old)</th><th>SPPF (new)</th></tr>
+          <tr><td>Pooling</td><td>3 parallel pools</td><td>3 series pools</td></tr>
+          <tr><td>Sizes</td><td>5×5, 9×9, 13×13</td><td>5×5 × 3</td></tr>
+          <tr><td>Speed</td><td>Slower</td><td style="color:#06d6a0"><strong>2× faster</strong></td></tr>
+          <tr><td>Accuracy</td><td>Same</td><td style="color:#06d6a0">Same</td></tr>
+        </table>
+        <div class="callout" style="margin-top:14px"><div class="callout-icon">💡</div><div class="callout-text">Three serial 5×5 MaxPools cover effective receptive fields of 5, 9, and 13 — identical to SPP but <strong>2× faster</strong>.</div></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- S17 — SUMMARY -->
-<div class="section" id="s17" style="border-bottom:none">
-  <div class="section-header">
-    <div class="step-num" style="background:linear-gradient(135deg,#00b4d8,#4361ee);color:#fff">★</div>
-    <div><h2>Summary</h2><p>Everything in one picture</p></div>
-  </div>
-  <div class="pipeline">
-    <div class="pipe-box" style="background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);color:#90a8ff">📷 Image (640×640×3)<div class="pipe-sub">Normalised to 0–1</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">BACKBONE — CSPDarknet + C2f + SPPF<div class="pipe-sub">Edges → shapes → semantic features at P3/P4/P5</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">NECK — PAN-FPN<div class="pipe-sub">Multi-scale fusion: small + medium + large objects all covered</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(114,9,183,.12);border:1px solid rgba(114,9,183,.28);color:#c890ff">HEAD — Decoupled + Anchor-Free + DFL<div class="pipe-sub">Classification branch · Regression branch · Task-Aligned Assigner</div></div>
-    <div class="pipe-arrow"></div>
-    <div class="pipe-box" style="background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0;font-weight:800">✅ Result: Boxes + Labels + Confidence in ~6ms<div class="pipe-sub">~312 FPS on A100 · 3.2M parameters · 37.3% mAP</div></div>
-  </div>
-  <div class="summary-box">
-    <p>
-      <strong style="color:#70d8f0">YOLOv8n</strong> is Ultralytics' nano-sized detector —
-      the <strong style="color:#ff80b0">CSPDarknet + C2f backbone</strong> extracts features via efficient cross-stage partial connections,
-      the <strong style="color:#70f0c8">PAN-FPN neck</strong> merges information across three scales so objects of every size are visible,
-      and the <strong style="color:#c890ff">decoupled anchor-free head</strong> predicts locations and classes in separate branches simultaneously —
-      all in a <strong style="color:#ffb703">single forward pass</strong>, making it the ideal choice for real-time edge applications.
-    </p>
-  </div>
-</div>
+  <!-- S13 -->
+  <div class="section" id="s13">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(0,180,216,.2);color:#70d8f0">13</div>
+      <div><h2>Anchor-Free vs Anchor-Based</h2><p>Concrete code-level comparison of how boxes are predicted</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="card" style="border-color:rgba(239,35,60,.3)">
+        <h3 style="color:#ff8090">Anchor-Based (YOLOv5)</h3>
+        <div class="code" style="font-size:.78rem"><span class="c-muted">Step 1: Pre-compute anchors (k-means)</span>
+<span class="c-pink">  [10×13]  [33×23]  [116×90]</span>
 
-</div><!-- /container -->
+<span class="c-muted">Step 2: Predict offsets</span>
+<span class="c-yellow">  tx, ty</span> <span class="c-muted">← offset from anchor center</span>
+<span class="c-yellow">  tw, th</span> <span class="c-muted">← scale factor of anchor</span>
 
-<div style="text-align:center;padding:30px 20px 100px;color:var(--muted);font-size:.82rem;border-top:1px solid var(--border);margin-top:20px">
-  YOLOv8n Explained — YOLO Fundamentals &amp; Architecture Guide
-</div>
+<span class="c-muted">Step 3: Decode box</span>
+<span class="c-green">  bx = sigmoid(tx) + cx</span>
+<span class="c-green">  bw = anchor_w × e^tw</span></div>
+        <div style="margin-top:10px;padding:8px;background:rgba(239,35,60,.07);border-radius:6px;font-size:.8rem;color:#ff8090">Anchors must be recalculated for every new dataset using k-means clustering</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,214,160,.3)">
+        <h3 style="color:#70f0c8">Anchor-Free (YOLOv8)</h3>
+        <div class="code" style="font-size:.78rem"><span class="c-muted">No pre-computation needed!</span>
+
+<span class="c-muted">Directly predicts:</span>
+<span class="c-green">  cx, cy</span> <span class="c-muted">← center of object</span>
+<span class="c-green">  w, h</span>   <span class="c-muted">← box dimensions</span>
+
+<span class="c-muted">Uses Distribution Focal Loss (DFL):</span>
+<span class="c-blue">  Predicts probability distribution</span>
+<span class="c-blue">  of edge positions → more accurate</span>
+
+<span class="c-muted">TAL assigns responsible cells</span>
+<span class="c-yellow">  dynamically per object</span></div>
+        <div style="margin-top:10px;padding:8px;background:rgba(6,214,160,.07);border-radius:6px;font-size:.8rem;color:#70f0c8">Works on any dataset without anchor tuning</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S14 -->
+  <div class="section" id="s14">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(239,35,60,.2);color:#ff8090">14</div>
+      <div><h2>Loss Functions</h2><p>Three components that tell the model how wrong it was during training</p></div>
+    </div>
+    <div class="grid-3">
+      <div class="card" style="border-color:rgba(247,37,133,.3)">
+        <h3 style="color:#ff80b0">Classification Loss</h3>
+        <div class="pill pill-pink" style="margin-bottom:10px">Binary Cross-Entropy</div>
+        <p style="font-size:.85rem;color:var(--muted)">Is this class present — YES or NO per class independently. Allows multi-label detection.</p>
+        <div class="formula" style="font-size:.76rem;margin-top:10px">BCE = −[y·log(p) + (1−y)·log(1−p)]</div>
+      </div>
+      <div class="card" style="border-color:rgba(67,97,238,.3)">
+        <h3 style="color:#90a8ff">Box Regression Loss</h3>
+        <div class="pill pill-blue" style="margin-bottom:10px">CIoU Loss</div>
+        <p style="font-size:.85rem;color:var(--muted)">Measures box overlap + center distance + aspect ratio together. Better than plain IoU.</p>
+        <div class="formula" style="font-size:.76rem;margin-top:10px">IoU = Overlap / Union Area</div>
+      </div>
+      <div class="card" style="border-color:rgba(6,214,160,.3)">
+        <h3 style="color:#70f0c8">Distribution Focal Loss</h3>
+        <div class="pill pill-green" style="margin-bottom:10px">DFL</div>
+        <p style="font-size:.85rem;color:var(--muted)">Predicts distribution of likely box edge positions instead of a single value — more robust.</p>
+        <div class="formula" style="font-size:.76rem;margin-top:10px">Total = λ₁·BCE + λ₂·CIoU + λ₃·DFL</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <h3>IoU — Intersection over Union</h3>
+      <div class="grid-3">
+        <div style="padding:12px;background:rgba(6,214,160,.08);border-radius:8px;text-align:center;font-size:.83rem"><div style="color:#06d6a0;font-weight:800;font-size:1.1rem">IoU = 1.0</div><div style="color:var(--muted);margin-top:4px">Perfect — predicted box exactly matches ground truth</div></div>
+        <div style="padding:12px;background:rgba(255,183,3,.07);border-radius:8px;text-align:center;font-size:.83rem"><div style="color:#ffb703;font-weight:800;font-size:1.1rem">IoU = 0.5</div><div style="color:var(--muted);margin-top:4px">50% overlap — acceptable but needs improvement</div></div>
+        <div style="padding:12px;background:rgba(239,35,60,.07);border-radius:8px;text-align:center;font-size:.83rem"><div style="color:#ff8090;font-weight:800;font-size:1.1rem">IoU = 0.0</div><div style="color:var(--muted);margin-top:4px">No overlap — predicted box completely wrong</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S15 -->
+  <div class="section" id="s15">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(6,214,160,.2);color:#70f0c8">15</div>
+      <div><h2>Full Inference Pipeline</h2><p>Step-by-step: what happens when you feed an image to YOLOv8n</p></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);color:#90a8ff">Step 1 — Pre-process<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Resize 640×640 · Normalize ÷255 · Add batch dim → (1,3,640,640)</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">Step 2 — Backbone<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">CSPDarknet + C2f + SPPF → feature maps at P3/P4/P5</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">Step 3 — Neck (PAN-FPN)<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Fuse features top-down and bottom-up across 3 scales</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(114,9,183,.12);border:1px solid rgba(114,9,183,.28);color:#c890ff">Step 4 — Head (Decoupled, Anchor-free)<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Cls branch + Reg branch independently at each of the 3 scales</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(255,183,3,.1);border:1px solid rgba(255,183,3,.28);color:#ffb703">Step 5 — Post-process<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Confidence threshold (0.25) → filter boxes → NMS → remove duplicates → scale back</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:800;background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0">✅ Output<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">[x1, y1, x2, y2, confidence, class_id] per detected object</div></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <h3>NMS — Non-Maximum Suppression</h3>
+      <div class="grid-2">
+        <div><div style="font-size:.84rem;color:var(--muted);margin-bottom:8px">Before NMS — multiple overlapping boxes:</div><div style="display:flex;gap:6px;flex-wrap:wrap"><div style="padding:8px 12px;background:rgba(67,97,238,.2);border:2px solid rgba(67,97,238,.5);border-radius:8px;font-size:.82rem;color:#90a8ff">Box A: 95%</div><div style="padding:8px 12px;background:rgba(247,37,133,.15);border:1px solid rgba(247,37,133,.3);border-radius:8px;font-size:.82rem;color:#ff80b0">Box B: 82%</div><div style="padding:8px 12px;background:rgba(251,133,0,.12);border:1px solid rgba(251,133,0,.25);border-radius:8px;font-size:.82rem;color:#ffc060">Box C: 71%</div></div></div>
+        <div><div style="font-size:.84rem;color:var(--muted);margin-bottom:8px">After NMS — highest confidence kept:</div><div style="display:flex;gap:6px"><div style="padding:8px 12px;background:rgba(6,214,160,.2);border:2px solid rgba(6,214,160,.5);border-radius:8px;font-size:.82rem;color:#06d6a0">Box A: 95% ✓</div><div style="padding:8px 12px;background:rgba(48,54,61,.4);border:1px dashed var(--border);border-radius:8px;font-size:.82rem;color:var(--muted)">B, C removed</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S16 -->
+  <div class="section" id="s16">
+    <div class="section-header">
+      <div class="step-num" style="background:rgba(251,133,0,.2);color:#ffc060">16</div>
+      <div><h2>YOLOv8n vs Other YOLOs</h2><p>Key architectural differences across major versions</p></div>
+    </div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table style="min-width:580px">
+          <tr><th>Feature</th><th>v5</th><th>v7</th><th style="color:#70d8f0">v8n ★</th><th>v9</th><th>v10</th></tr>
+          <tr><td>Anchor</td><td><span class="pill pill-red">Anchor-based</span></td><td><span class="pill pill-red">Anchor-based</span></td><td><span class="pill pill-cyan">Anchor-free</span></td><td><span class="pill pill-cyan">Anchor-free</span></td><td><span class="pill pill-cyan">Anchor-free</span></td></tr>
+          <tr><td>Head</td><td><span class="pill pill-orange">Coupled</span></td><td><span class="pill pill-orange">Coupled</span></td><td><span class="pill pill-green">Decoupled</span></td><td><span class="pill pill-green">Decoupled</span></td><td><span class="pill pill-green">Decoupled</span></td></tr>
+          <tr><td>Backbone</td><td style="font-size:.82rem">CSPDarknet</td><td style="font-size:.82rem">E-ELAN</td><td style="font-size:.82rem;color:#70d8f0">CSPDarknet+C2f</td><td style="font-size:.82rem">GELAN</td><td style="font-size:.82rem">CSPNet</td></tr>
+          <tr><td>Neck</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem;color:#70d8f0">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td><td style="font-size:.82rem">PAN-FPN</td></tr>
+          <tr><td>NMS</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Yes</td><td style="color:#06d6a0">No ✓</td></tr>
+          <tr><td>Tasks</td><td style="font-size:.82rem">Det, Seg</td><td style="font-size:.82rem">Det</td><td style="font-size:.82rem;color:#70d8f0">Det+Seg+Pose+Cls</td><td style="font-size:.82rem">Det</td><td style="font-size:.82rem">Det</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- S17 SUMMARY -->
+  <div class="section" id="s17" style="border-bottom:none">
+    <div class="section-header">
+      <div class="step-num" style="background:linear-gradient(135deg,#4361ee,#7209b7);color:#fff">★</div>
+      <div><h2>Summary</h2><p>Everything in one picture</p></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(67,97,238,.12);border:1px solid rgba(67,97,238,.3);color:#90a8ff">📷 Image (640×640×3)<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Normalised to 0–1 range</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(247,37,133,.1);border:1px solid rgba(247,37,133,.25);color:#ff80b0">BACKBONE — CSPDarknet + C2f + SPPF<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Edges → shapes → semantic features at P3/P4/P5</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(6,214,160,.1);border:1px solid rgba(6,214,160,.25);color:#70f0c8">NECK — PAN-FPN<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Multi-scale fusion: small + medium + large objects all covered</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:14px 20px;text-align:center;font-weight:600;background:rgba(114,9,183,.12);border:1px solid rgba(114,9,183,.28);color:#c890ff">HEAD — Decoupled + Anchor-Free + DFL<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Cls branch · Reg branch · Task-Aligned Assigner</div></div>
+      <div style="width:2px;height:22px;background:var(--border)"></div>
+      <div style="width:100%;max-width:560px;border-radius:10px;padding:16px 20px;text-align:center;font-weight:800;background:rgba(6,214,160,.15);border:2px solid rgba(6,214,160,.5);color:#06d6a0">✅ ~6ms · ~312 FPS · 3.2M params · 37.3% mAP COCO<div style="font-size:.78rem;font-weight:400;opacity:.8;margin-top:3px">Best choice for real-time edge applications</div></div>
+    </div>
+    <div style="background:linear-gradient(135deg,rgba(67,97,238,.1),rgba(114,9,183,.1));border:1px solid rgba(67,97,238,.3);border-radius:14px;padding:30px;text-align:center;margin-top:40px">
+      <p style="font-size:clamp(1rem,2.5vw,1.15rem);line-height:1.8;color:#cdd9ff">
+        <strong style="color:#70d8f0">YOLOv8n</strong> is Ultralytics' nano-sized detector —
+        the <strong style="color:#ff80b0">CSPDarknet + C2f backbone</strong> extracts features via efficient cross-stage partial connections,
+        the <strong style="color:#70f0c8">PAN-FPN neck</strong> merges information across three scales,
+        and the <strong style="color:#c890ff">decoupled anchor-free head</strong> predicts locations and classes in separate branches simultaneously —
+        all in a <strong style="color:#ffb703">single forward pass</strong>.
+      </p>
+    </div>
+  </div>
+
+</div><!-- end container -->
 
 <!-- SIDEBAR SCRIPT -->
 <script>
@@ -1049,38 +1483,98 @@ tr:hover td { background:rgba(255,255,255,.02); }
   const sbBtn     = document.getElementById('sidebar-btn');
   const sbClose   = document.getElementById('sidebar-close');
   const sbOverlay = document.getElementById('sidebar-overlay');
-  function openSidebar()  { sidebar.classList.add('open'); sbBtn.classList.add('shifted'); sbOverlay.classList.add('show'); document.body.classList.add('sb-open'); sbBtn.textContent='Hide'; }
-  function closeSidebar() { sidebar.classList.remove('open'); sbBtn.classList.remove('shifted'); sbOverlay.classList.remove('show'); document.body.classList.remove('sb-open'); sbBtn.textContent='Contents'; }
-  sbBtn.addEventListener('click', ()=> sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sbBtn.classList.add('shifted');
+    sbOverlay.classList.add('show');
+    document.body.classList.add('sb-open');
+    sbBtn.textContent = 'Hide';
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sbBtn.classList.remove('shifted');
+    sbOverlay.classList.remove('show');
+    document.body.classList.remove('sb-open');
+    sbBtn.textContent = 'Contents';
+  }
+  function toggleSidebar() {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  }
+
+  sbBtn.addEventListener('click', toggleSidebar);
   sbClose.addEventListener('click', closeSidebar);
   sbOverlay.addEventListener('click', closeSidebar);
-  document.querySelectorAll('.nav-item').forEach(a => a.addEventListener('click', ()=>{ if(window.innerWidth<900) closeSidebar(); }));
+
+  document.querySelectorAll('.nav-item').forEach(a => {
+    a.addEventListener('click', () => {
+      if (window.innerWidth < 900) closeSidebar();
+    });
+  });
+
   const sections = document.querySelectorAll('.section');
   const navLinks = document.querySelectorAll('.nav-item');
-  new IntersectionObserver(entries=>{
-    entries.forEach(e=>{ if(e.isIntersecting) navLinks.forEach(a=> a.classList.toggle('active', a.getAttribute('href')==='#'+e.target.id)); });
-  },{ rootMargin:'-20% 0px -70% 0px', threshold:0 }).observe && sections.forEach(s=> new IntersectionObserver(entries=>{
-    entries.forEach(e=>{ if(e.isIntersecting) navLinks.forEach(a=> a.classList.toggle('active', a.getAttribute('href')==='#'+e.target.id)); });
-  },{ rootMargin:'-20% 0px -70% 0px' }).observe(s));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px', threshold: 0 });
+
+  sections.forEach(s => observer.observe(s));
 </script>
 
-<!-- FONT CONTROLLER -->
+<!-- FONT SIZE CONTROLLER -->
 <div id="font-ctrl">
   <span class="fc-icon">A</span>
   <span class="fc-label">Font</span>
   <input id="font-slider" type="range" min="10" max="64" step="1" value="16" aria-label="Font size">
   <span class="fc-value" id="fc-val">16px</span>
-  <button id="fc-reset">Reset</button>
+  <button id="fc-reset" title="Reset to default">Reset</button>
 </div>
+
 <script>
-  const DEFAULT=16,MIN=10,MAX=64;
-  const sl=document.getElementById('font-slider'),vl=document.getElementById('fc-val'),rb=document.getElementById('fc-reset'),fc=document.getElementById('font-ctrl');
-  function applySize(px){ document.documentElement.style.fontSize=px+'px'; vl.textContent=px+'px'; sl.style.setProperty('--pct',((px-MIN)/(MAX-MIN)*100).toFixed(2)+'%'); }
-  sl.value=DEFAULT; applySize(DEFAULT);
-  sl.addEventListener('input',()=>applySize(+sl.value));
-  rb.addEventListener('click',()=>{ sl.value=DEFAULT; applySize(DEFAULT); });
-  let ht; function showFc(){ fc.style.opacity='1'; clearTimeout(ht); ht=setTimeout(()=>fc.style.opacity='.5',3000); }
-  fc.addEventListener('mouseenter',showFc); fc.addEventListener('touchstart',showFc,{passive:true}); document.addEventListener('scroll',showFc,{passive:true}); showFc();
+  const DEFAULT_SIZE = 16;
+  const MIN = 10, MAX = 64;
+
+  const slider   = document.getElementById('font-slider');
+  const valLbl   = document.getElementById('fc-val');
+  const resetBtn = document.getElementById('fc-reset');
+  const root     = document.documentElement;
+
+  function applySize(px) {
+    root.style.fontSize = px + 'px';
+    valLbl.textContent = px + 'px';
+    const pct = ((px - MIN) / (MAX - MIN) * 100).toFixed(2) + '%';
+    slider.style.setProperty('--pct', pct);
+  }
+
+  slider.value = DEFAULT_SIZE;
+  applySize(DEFAULT_SIZE);
+
+  slider.addEventListener('input', () => applySize(Number(slider.value)));
+
+  resetBtn.addEventListener('click', () => {
+    slider.value = DEFAULT_SIZE;
+    applySize(DEFAULT_SIZE);
+  });
+
+  let hideTimer;
+  const ctrl = document.getElementById('font-ctrl');
+  function showCtrl() {
+    ctrl.style.opacity = '1';
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => { ctrl.style.opacity = '0.5'; }, 3000);
+  }
+  ctrl.addEventListener('mouseenter', showCtrl);
+  ctrl.addEventListener('touchstart', showCtrl, { passive: true });
+  document.addEventListener('scroll', showCtrl, { passive: true });
+  showCtrl();
 </script>
+
 </body>
 </html>
