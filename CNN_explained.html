@@ -28,13 +28,26 @@
     font-family: 'Segoe UI', system-ui, sans-serif;
     line-height: 1.7;
     font-size: 16px;
+  }
+
+  /* ── SCALABLE CONTENT COMPONENTS ONLY ── */
+  p, td, li,
+  .callout-text,
+  .section-header p,
+  .highlight,
+  .pipe-sub,
+  .toc a,
+  .prob-label,
+  .epoch-label, .epoch-val,
+  .summary-box p {
+    font-size: var(--fs, 16px);
     transition: font-size 0.25s ease;
   }
 
   /* ── FONT CONTROLLER ── */
   #font-ctrl {
     position: fixed;
-    bottom: 28px;
+    top: 16px;
     right: 24px;
     z-index: 9999;
     background: #1c2333;
@@ -128,7 +141,7 @@
   }
   @media(max-width:480px) {
     #font-ctrl {
-      bottom: 16px; right: 12px; left: 12px;
+      top: 10px; right: 10px; left: 10px;
       min-width: unset;
     }
   }
@@ -1526,18 +1539,19 @@
   const DEFAULT_SIZE = 16;
   const MIN = 10, MAX = 64;
 
-  const slider  = document.getElementById('font-slider');
-  const valLbl  = document.getElementById('fc-val');
-  const resetBtn= document.getElementById('fc-reset');
+  const slider   = document.getElementById('font-slider');
+  const valLbl   = document.getElementById('fc-val');
+  const resetBtn = document.getElementById('fc-reset');
+  const root     = document.documentElement;
 
   function applySize(px) {
-    document.body.style.fontSize = px + 'px';
+    // only content components scale via --fs, headings/badges/code stay fixed
+    root.style.setProperty('--fs', px + 'px');
     valLbl.textContent = px + 'px';
     const pct = ((px - MIN) / (MAX - MIN) * 100).toFixed(2) + '%';
     slider.style.setProperty('--pct', pct);
   }
 
-  // set default on load
   slider.value = DEFAULT_SIZE;
   applySize(DEFAULT_SIZE);
 
@@ -1548,19 +1562,16 @@
     applySize(DEFAULT_SIZE);
   });
 
-  // fade controller when idle, show on hover/touch
+  // fade when idle, restore on interaction
   let hideTimer;
   const ctrl = document.getElementById('font-ctrl');
   function showCtrl() {
     ctrl.style.opacity = '1';
-    ctrl.style.transform = 'translateY(0)';
     clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-      ctrl.style.opacity = '0.45';
-    }, 3000);
+    hideTimer = setTimeout(() => { ctrl.style.opacity = '0.5'; }, 3000);
   }
   ctrl.addEventListener('mouseenter', showCtrl);
-  ctrl.addEventListener('touchstart', showCtrl);
+  ctrl.addEventListener('touchstart', showCtrl, { passive: true });
   document.addEventListener('scroll', showCtrl, { passive: true });
   showCtrl();
 </script>
