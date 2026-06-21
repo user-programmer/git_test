@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ANN Explained — Fundamentals, Grayscale & RGB</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bg4:#21262d;
+  --border:#30363d;--text:#e6edf3;--muted:#8b949e;
+  --blue:#58a6ff;--green:#3fb950;--purple:#bc8cff;
+  --orange:#f0883e;--red:#f85149;--cyan:#39d353;
+  --yellow:#e3b341;--pink:#f778ba;
+  --radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7;}
+
+/* ── FONT CONTROLLER ── */
+#fc{
+  position:fixed;top:16px;right:16px;z-index:2000;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;padding:8px 12px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  font-size:12px;color:var(--muted);
+  width:220px;
+}
+#fc label{white-space:nowrap;font-size:12px;}
+#fc-val{color:var(--blue);font-weight:700;min-width:36px;font-size:12px;}
+#fc-slider{
+  flex:1;-webkit-appearance:none;appearance:none;
+  height:4px;border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--blue) var(--pct,31.25%),var(--bg4) var(--pct,31.25%));
+}
+#fc-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer;}
+#fc-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer;border:none;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:270px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:1500;
+  transform:translateX(-270px);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  padding:20px 0 40px;
+}
+#sidebar.open{transform:translateX(0);}
+#sidebar h3{
+  font-size:0.75rem;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);padding:0 20px 10px;border-bottom:1px solid var(--border);
+  margin-bottom:10px;
+}
+#sidebar a{
+  display:block;padding:6px 20px;font-size:0.8rem;
+  color:var(--muted);text-decoration:none;
+  border-left:2px solid transparent;
+  transition:all .2s;
+}
+#sidebar a:hover{color:var(--text);background:var(--bg3);}
+#sidebar a.active{color:var(--blue);border-left-color:var(--blue);background:rgba(88,166,255,.07);}
+.nav-part{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--purple);padding:14px 20px 4px;font-weight:700;
+}
+#sidebar-btn{
+  position:fixed;top:50%;left:0;z-index:1600;
+  transform:translateY(-50%);
+  background:var(--blue);color:#000;
+  border:none;cursor:pointer;padding:10px 5px;
+  border-radius:0 6px 6px 0;
+  writing-mode:vertical-rl;font-size:0.7rem;font-weight:700;
+  transition:left .3s cubic-bezier(.4,0,.2,1);
+  letter-spacing:.05em;
+}
+#sidebar-btn.shifted{left:270px;}
+#backdrop{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1400;
+}
+@media(min-width:900px){
+  body.sb-open .container{margin-left:290px;}
+  #backdrop{display:none!important;}
+}
+
+/* ── LAYOUT ── */
+.container{
+  max-width:980px;margin:0 auto;padding:30px 20px 80px;
+  transition:margin-left .3s cubic-bezier(.4,0,.2,1);
+}
+section{margin-bottom:60px;scroll-margin-top:20px;}
+
+/* ── TYPOGRAPHY ── */
+h1{font-size:2.4rem;font-weight:800;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+h2{font-size:1.5rem;font-weight:700;color:var(--blue);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+h3{font-size:1.1rem;font-weight:600;color:var(--purple);margin-bottom:12px;}
+h4{font-size:0.95rem;font-weight:600;color:var(--cyan);margin-bottom:8px;}
+p{margin-bottom:12px;color:var(--text);}
+ul,ol{padding-left:1.4rem;margin-bottom:12px;}
+li{margin-bottom:5px;}
+strong{color:var(--yellow);}
+code{background:var(--bg3);border:1px solid var(--border);padding:1px 6px;border-radius:4px;font-size:0.85em;color:var(--orange);}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.card-blue{border-left:3px solid var(--blue);}
+.card-purple{border-left:3px solid var(--purple);}
+.card-green{border-left:3px solid var(--green);}
+.card-orange{border-left:3px solid var(--orange);}
+.card-cyan{border-left:3px solid var(--cyan);}
+.card-red{border-left:3px solid var(--red);}
+.card-yellow{border-left:3px solid var(--yellow);}
+.card-pink{border-left:3px solid var(--pink);}
+
+/* ── GRIDS ── */
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px;}
+
+/* ── HIGHLIGHT / CALLOUT ── */
+.highlight{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);border-radius:8px;padding:14px 18px;margin-bottom:14px;}
+.callout{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start;}
+.callout-icon{font-size:1.3rem;flex-shrink:0;}
+.callout-text{font-size:0.9rem;}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto;margin-bottom:16px;}
+table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+th{background:var(--bg3);color:var(--blue);font-weight:600;padding:10px 14px;text-align:left;border:1px solid var(--border);}
+td{padding:9px 14px;border:1px solid var(--border);vertical-align:top;}
+tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+tr:hover td{background:rgba(88,166,255,.05);}
+
+/* ── PILL BADGES ── */
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.75rem;font-weight:600;margin:2px;}
+.pill-blue{background:rgba(88,166,255,.18);color:var(--blue);border:1px solid rgba(88,166,255,.35);}
+.pill-green{background:rgba(63,185,80,.18);color:var(--green);border:1px solid rgba(63,185,80,.35);}
+.pill-purple{background:rgba(188,140,255,.18);color:var(--purple);border:1px solid rgba(188,140,255,.35);}
+.pill-orange{background:rgba(240,136,62,.18);color:var(--orange);border:1px solid rgba(240,136,62,.35);}
+.pill-cyan{background:rgba(57,211,83,.18);color:var(--cyan);border:1px solid rgba(57,211,83,.35);}
+.pill-yellow{background:rgba(227,179,65,.18);color:var(--yellow);border:1px solid rgba(227,179,65,.35);}
+.pill-red{background:rgba(248,81,73,.18);color:var(--red);border:1px solid rgba(248,81,73,.35);}
+.pill-pink{background:rgba(247,120,186,.18);color:var(--pink);border:1px solid rgba(247,120,186,.35);}
+
+/* ── PIPELINE / FLOW ── */
+.pipeline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:16px 0;}
+.pipe-box{
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;font-size:0.82rem;font-weight:600;text-align:center;min-width:90px;
+}
+.pipe-box.blue{border-color:var(--blue);color:var(--blue);background:rgba(88,166,255,.1);}
+.pipe-box.purple{border-color:var(--purple);color:var(--purple);background:rgba(188,140,255,.1);}
+.pipe-box.green{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.1);}
+.pipe-box.orange{border-color:var(--orange);color:var(--orange);background:rgba(240,136,62,.1);}
+.pipe-box.cyan{border-color:var(--cyan);color:var(--cyan);background:rgba(57,211,83,.1);}
+.pipe-box.red{border-color:var(--red);color:var(--red);background:rgba(248,81,73,.1);}
+.pipe-box.yellow{border-color:var(--yellow);color:var(--yellow);background:rgba(227,179,65,.1);}
+.pipe-box.pink{border-color:var(--pink);color:var(--pink);background:rgba(247,120,186,.1);}
+.pipe-arrow{color:var(--muted);font-size:1.2rem;flex-shrink:0;}
+
+/* ── FORMULA BOX ── */
+.formula{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:14px 20px;margin:12px 0;
+  font-family:'Courier New',monospace;font-size:0.9rem;
+  color:var(--cyan);overflow-x:auto;
+}
+
+/* ── NEURON VISUAL ── */
+.neuron-diagram{
+  display:flex;align-items:center;gap:20px;margin:20px 0;
+  flex-wrap:wrap;justify-content:center;
+}
+.inputs-col{display:flex;flex-direction:column;gap:10px;}
+.input-node{
+  background:rgba(57,211,83,.15);border:2px solid var(--cyan);
+  border-radius:50%;width:56px;height:56px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;color:var(--cyan);text-align:center;
+  flex-shrink:0;
+}
+.weight-lines{display:flex;flex-direction:column;gap:10px;align-items:flex-end;}
+.weight-tag{
+  background:rgba(240,136,62,.15);border:1px solid var(--orange);
+  border-radius:4px;padding:2px 8px;font-size:0.72rem;
+  color:var(--orange);white-space:nowrap;
+}
+.neuron-body{
+  background:rgba(88,166,255,.15);border:2px solid var(--blue);
+  border-radius:50%;width:88px;height:88px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:0.7rem;font-weight:700;color:var(--blue);text-align:center;
+  flex-shrink:0;
+}
+.activation-box{
+  background:rgba(188,140,255,.15);border:2px solid var(--purple);
+  border-radius:8px;padding:12px 16px;
+  font-size:0.8rem;font-weight:700;color:var(--purple);text-align:center;
+}
+.output-node{
+  background:rgba(227,179,65,.15);border:2px solid var(--yellow);
+  border-radius:50%;width:64px;height:64px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.78rem;font-weight:700;color:var(--yellow);text-align:center;
+}
+
+/* ── ANN LAYER VISUAL ── */
+.ann-visual{
+  display:flex;align-items:center;gap:0;margin:20px 0;overflow-x:auto;
+}
+.layer-col{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 16px;}
+.layer-label{font-size:0.7rem;color:var(--muted);text-align:center;margin-top:6px;font-weight:600;}
+.neuron{
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;font-weight:700;border:2px solid;
+}
+.n-input{width:44px;height:44px;background:rgba(57,211,83,.15);border-color:var(--cyan);color:var(--cyan);}
+.n-hidden{width:44px;height:44px;background:rgba(88,166,255,.15);border-color:var(--blue);color:var(--blue);}
+.n-output{width:44px;height:44px;background:rgba(227,179,65,.15);border-color:var(--yellow);color:var(--yellow);}
+.connector{width:40px;border-top:2px dashed var(--border);margin-top:-4px;}
+
+/* ── PIXEL GRID ── */
+.px-grid{display:inline-grid;gap:3px;margin:10px 0;}
+.px-cell{
+  width:36px;height:36px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;font-weight:700;border:1px solid rgba(255,255,255,.08);
+}
+
+/* ── PART BANNER ── */
+.part-banner{
+  background:linear-gradient(135deg,var(--bg2),var(--bg3));
+  border:1px solid var(--border);border-radius:12px;
+  padding:20px 28px;margin-bottom:32px;
+  border-left:4px solid var(--purple);
+}
+.part-banner h2{border:none;padding:0;margin-bottom:6px;font-size:1.6rem;}
+.part-banner p{margin:0;color:var(--muted);}
+
+/* ── STEP BOXES ── */
+.step-row{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start;}
+.step-num{
+  background:var(--blue);color:#000;border-radius:50%;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  font-size:0.78rem;font-weight:800;flex-shrink:0;margin-top:2px;
+}
+.step-body{flex:1;}
+
+/* ── COMPARISON BLOCK ── */
+.vs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+@media(max-width:600px){.vs-grid{grid-template-columns:1fr;}}
+
+/* ── FLAT VECTOR ── */
+.flat-vector{display:flex;flex-wrap:wrap;gap:4px;margin:12px 0;}
+.fv-cell{
+  width:32px;height:32px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.6rem;font-weight:700;
+  border:1px solid rgba(255,255,255,.1);
+}
+
+/* ── SUMMARY BOX ── */
+.summary-box{
+  background:linear-gradient(135deg,rgba(88,166,255,.07),rgba(188,140,255,.07));
+  border:1px solid rgba(88,166,255,.25);border-radius:12px;
+  padding:24px 28px;margin-top:30px;
+}
+.summary-box h3{color:var(--blue);margin-bottom:14px;}
+
+/* ── INTRO HERO ── */
+.hero{text-align:center;padding:40px 20px 30px;}
+.hero p{color:var(--muted);font-size:1rem;max-width:620px;margin:10px auto 0;}
+.part-pills{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;}
+
+/* ── BAR ROWS ── */
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-label{font-size:0.82rem;min-width:130px;color:var(--text);}
+.bar-bg{flex:1;background:var(--bg4);border-radius:4px;height:18px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:0.7rem;font-weight:700;color:#000;}
+
+@media(max-width:600px){
+  h1{font-size:1.7rem;}
+  h2{font-size:1.2rem;}
+  .neuron-diagram{flex-direction:column;}
+  .ann-visual{justify-content:flex-start;}
+}
+</style>
+</head>
+<body>
+
+<!-- Font Controller -->
+<div id="fc">
+  <label>A</label>
+  <input id="fc-slider" type="range" min="10" max="64" step="1" value="16" style="--pct:31.25%"/>
+  <span id="fc-val">16px</span>
+</div>
+
+<!-- Sidebar Toggle -->
+<button id="sidebar-btn" aria-label="Toggle menu">Contents</button>
+<div id="backdrop"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <h3>ANN Explained</h3>
+
+  <div class="nav-part">Part 1 — Fundamentals</div>
+  <a href="#s1">1. What is an ANN?</a>
+  <a href="#s2">2. The Artificial Neuron</a>
+  <a href="#s3">3. Simple Example: Pass / Fail</a>
+  <a href="#s4">4. Activation Functions</a>
+  <a href="#s5">5. Forward Pass Step-by-Step</a>
+  <a href="#s6">6. Loss & Backpropagation</a>
+  <a href="#s7">7. Training Loop</a>
+
+  <div class="nav-part">Part 2 — Grayscale Image</div>
+  <a href="#s8">8. What is Grayscale?</a>
+  <a href="#s9">9. Flattening to 1D Vector</a>
+  <a href="#s10">10. 8×8 Image Forward Pass</a>
+  <a href="#s11">11. Hidden Layer Processing</a>
+  <a href="#s12">12. ANN Classifies Grayscale</a>
+
+  <div class="nav-part">Part 3 — RGB Image</div>
+  <a href="#s13">13. What is RGB?</a>
+  <a href="#s14">14. Flattening RGB: 8×8×3 = 192</a>
+  <a href="#s15">15. RGB Forward Pass</a>
+  <a href="#s16">16. Single vs Multi-Channel</a>
+  <a href="#s17">17. Why CNN beats ANN on Images</a>
+</nav>
+
+<!-- Main Content -->
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Artificial Neural Networks</h1>
+    <p>From a single neuron to classifying RGB images — every step explained with real numbers.</p>
+    <div class="part-pills">
+      <span class="pill pill-purple">Part 1: ANN Fundamentals</span>
+      <span class="pill pill-blue">Part 2: Grayscale Image</span>
+      <span class="pill pill-orange">Part 3: RGB Image</span>
+    </div>
+  </div>
+
+  <!-- ============================= PART 1 ============================= -->
+  <div class="part-banner">
+    <h2>Part 1 — ANN Fundamentals</h2>
+    <p>How a network of artificial neurons learns to make decisions, with a concrete example using real numbers.</p>
+  </div>
+
+  <!-- S1: What is ANN -->
+  <section id="s1">
+    <h2>1. What is an Artificial Neural Network?</h2>
+    <div class="grid-2">
+      <div class="card card-blue">
+        <h3>Biological Neuron</h3>
+        <ul>
+          <li>Receives signals through <strong>dendrites</strong></li>
+          <li>Cell body <strong>sums up</strong> all signals</li>
+          <li>If sum exceeds threshold → fires through <strong>axon</strong></li>
+          <li>Connects to next neuron via <strong>synapse</strong></li>
+        </ul>
+      </div>
+      <div class="card card-purple">
+        <h3>Artificial Neuron</h3>
+        <ul>
+          <li>Receives <strong>numeric inputs</strong> (x₁, x₂, …)</li>
+          <li>Each input has a <strong>weight</strong> (w₁, w₂, …)</li>
+          <li>Sums weighted inputs + <strong>bias</strong></li>
+          <li>Passes through <strong>activation function</strong> → output</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">🧠</div>
+      <div class="callout-text">An ANN is a collection of layers of neurons, where each layer transforms its inputs and passes the result forward. By adjusting the weights through training, the network learns to recognize patterns.</div>
+    </div>
+
+    <h3>ANN Architecture Overview</h3>
+    <div class="ann-visual">
+      <div class="layer-col">
+        <div class="neuron n-input">x₁</div>
+        <div class="neuron n-input">x₂</div>
+        <div class="neuron n-input">x₃</div>
+        <div class="layer-label">Input<br/>Layer</div>
+      </div>
+      <div style="width:40px;border-top:2px dashed #30363d;align-self:center;flex-shrink:0;"></div>
+      <div class="layer-col">
+        <div class="neuron n-hidden">h₁</div>
+        <div class="neuron n-hidden">h₂</div>
+        <div class="neuron n-hidden">h₃</div>
+        <div class="neuron n-hidden">h₄</div>
+        <div class="layer-label">Hidden<br/>Layer 1</div>
+      </div>
+      <div style="width:40px;border-top:2px dashed #30363d;align-self:center;flex-shrink:0;"></div>
+      <div class="layer-col">
+        <div class="neuron n-hidden">h₁</div>
+        <div class="neuron n-hidden">h₂</div>
+        <div class="neuron n-hidden">h₃</div>
+        <div class="layer-label">Hidden<br/>Layer 2</div>
+      </div>
+      <div style="width:40px;border-top:2px dashed #30363d;align-self:center;flex-shrink:0;"></div>
+      <div class="layer-col">
+        <div class="neuron n-output">y₁</div>
+        <div class="neuron n-output">y₂</div>
+        <div class="layer-label">Output<br/>Layer</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card card-cyan">
+        <h4>Input Layer</h4>
+        <p style="font-size:0.88rem;">Receives raw data — no computation here. Each node = one feature (e.g., one pixel value or one measurement).</p>
+      </div>
+      <div class="card card-blue">
+        <h4>Hidden Layer(s)</h4>
+        <p style="font-size:0.88rem;">Where learning happens. Each neuron learns a combination of the previous layer's signals. More hidden layers = deeper network.</p>
+      </div>
+      <div class="card card-yellow">
+        <h4>Output Layer</h4>
+        <p style="font-size:0.88rem;">Produces the final answer. For binary (yes/no) = 1 neuron. For 10 classes (0–9 digits) = 10 neurons.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- S2: Single Neuron -->
+  <section id="s2">
+    <h2>2. The Artificial Neuron — Inside One Node</h2>
+
+    <div class="neuron-diagram">
+      <div class="inputs-col">
+        <div class="input-node">x₁<br/><span style="font-size:0.6rem">0.8</span></div>
+        <div class="input-node">x₂<br/><span style="font-size:0.6rem">0.5</span></div>
+        <div class="input-node">x₃<br/><span style="font-size:0.6rem">1.0</span></div>
+        <div class="input-node">b<br/><span style="font-size:0.6rem">+1</span></div>
+      </div>
+      <div class="weight-lines">
+        <div class="weight-tag">w₁ = 0.4</div>
+        <div class="weight-tag">w₂ = -0.3</div>
+        <div class="weight-tag">w₃ = 0.7</div>
+        <div class="weight-tag">b = 0.1</div>
+      </div>
+      <div style="font-size:1.6rem;color:var(--muted);">→</div>
+      <div class="neuron-body">
+        Σ<br/>
+        <span style="font-size:0.6rem;font-weight:400;color:var(--muted)">weighted<br/>sum</span>
+      </div>
+      <div style="font-size:1.6rem;color:var(--muted);">→</div>
+      <div class="activation-box">
+        f(z)<br/>
+        <span style="font-size:0.7rem;font-weight:400;color:var(--muted)">Activation<br/>Function</span>
+      </div>
+      <div style="font-size:1.6rem;color:var(--muted);">→</div>
+      <div class="output-node">
+        ŷ<br/>
+        <span style="font-size:0.6rem">output</span>
+      </div>
+    </div>
+
+    <h3>Step-by-Step Calculation</h3>
+    <div class="formula">
+      z = (x₁×w₁) + (x₂×w₂) + (x₃×w₃) + bias<br/>
+      z = (0.8×0.4) + (0.5×-0.3) + (1.0×0.7) + 0.1<br/>
+      z = 0.32 + (-0.15) + 0.70 + 0.10<br/>
+      z = <strong>0.97</strong>
+    </div>
+    <div class="formula">
+      output = f(z) = sigmoid(0.97) = 1 / (1 + e⁻⁰·⁹⁷) ≈ <strong>0.725</strong>
+    </div>
+
+    <div class="highlight">
+      <strong>Key idea:</strong> Each weight controls how much a specific input influences the neuron. A positive weight amplifies; a negative weight suppresses. The bias shifts the threshold — it lets the neuron fire even when all inputs are zero.
+    </div>
+  </section>
+
+  <!-- S3: Simple Example -->
+  <section id="s3">
+    <h2>3. Simple Example — Predicting Pass or Fail</h2>
+
+    <div class="callout">
+      <div class="callout-icon">📚</div>
+      <div class="callout-text"><strong>Task:</strong> Given (study_hours, sleep_hours), predict if a student Passes (1) or Fails (0). This is a binary classification problem — a perfect first ANN example.</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-green">
+        <h3>Training Data</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Study Hrs</th><th>Sleep Hrs</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td>8</td><td>7</td><td><span class="pill pill-green">Pass</span></td></tr>
+              <tr><td>2</td><td>4</td><td><span class="pill pill-red">Fail</span></td></tr>
+              <tr><td>6</td><td>8</td><td><span class="pill pill-green">Pass</span></td></tr>
+              <tr><td>1</td><td>3</td><td><span class="pill pill-red">Fail</span></td></tr>
+              <tr><td>5</td><td>6</td><td><span class="pill pill-green">Pass</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card card-blue">
+        <h3>Network Design</h3>
+        <p style="font-size:0.88rem;"><strong>Input layer:</strong> 2 neurons (study_hours, sleep_hours)</p>
+        <p style="font-size:0.88rem;"><strong>Hidden layer:</strong> 3 neurons (learns combinations)</p>
+        <p style="font-size:0.88rem;"><strong>Output layer:</strong> 1 neuron (probability of Pass)</p>
+        <p style="font-size:0.88rem;"><strong>Activation:</strong> Sigmoid (outputs 0–1)</p>
+        <p style="font-size:0.88rem;"><strong>Loss:</strong> Binary Cross-Entropy</p>
+        <div class="pipeline">
+          <div class="pipe-box cyan">2 Inputs</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box blue">3 Hidden</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box yellow">1 Output</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Normalization (Before Training)</h3>
+    <div class="highlight">
+      Raw inputs span 1–10 (hours). We normalize to 0–1 by dividing by max value. This helps training converge faster.
+    </div>
+    <div class="formula">
+      Normalized study = 8 / 10 = 0.8<br/>
+      Normalized sleep = 7 / 10 = 0.7<br/>
+      Input vector = [0.8, 0.7]
+    </div>
+  </section>
+
+  <!-- S4: Activation Functions -->
+  <section id="s4">
+    <h2>4. Activation Functions</h2>
+
+    <div class="callout">
+      <div class="callout-icon">⚡</div>
+      <div class="callout-text">Without activation functions, stacking layers would just be linear algebra — the whole network collapses into a single linear equation. Activation functions introduce non-linearity, enabling the network to learn complex patterns.</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-blue">
+        <h3>Sigmoid σ(z)</h3>
+        <div class="formula">σ(z) = 1 / (1 + e⁻ᶻ)</div>
+        <p style="font-size:0.85rem;">Output range: <strong>0 to 1</strong></p>
+        <p style="font-size:0.85rem;"><span class="pill pill-green">Good for</span> Binary output (probability)</p>
+        <p style="font-size:0.85rem;"><span class="pill pill-red">Weakness</span> Vanishing gradient on very large/small z</p>
+        <p style="font-size:0.85rem;">Example: z=0 → 0.5 &nbsp;|&nbsp; z=2 → 0.88 &nbsp;|&nbsp; z=-2 → 0.12</p>
+      </div>
+      <div class="card card-green">
+        <h3>ReLU — Rectified Linear Unit</h3>
+        <div class="formula">ReLU(z) = max(0, z)</div>
+        <p style="font-size:0.85rem;">Output range: <strong>0 to +∞</strong></p>
+        <p style="font-size:0.85rem;"><span class="pill pill-green">Good for</span> Hidden layers — fast, avoids vanishing gradient</p>
+        <p style="font-size:0.85rem;"><span class="pill pill-red">Weakness</span> Dead neuron if z always ≤ 0</p>
+        <p style="font-size:0.85rem;">Example: z=3.5 → 3.5 &nbsp;|&nbsp; z=-1.2 → 0</p>
+      </div>
+      <div class="card card-purple">
+        <h3>Tanh — Hyperbolic Tangent</h3>
+        <div class="formula">tanh(z) = (eᶻ - e⁻ᶻ) / (eᶻ + e⁻ᶻ)</div>
+        <p style="font-size:0.85rem;">Output range: <strong>-1 to +1</strong></p>
+        <p style="font-size:0.85rem;"><span class="pill pill-green">Good for</span> Zero-centered, better than sigmoid for hidden layers</p>
+        <p style="font-size:0.85rem;">Example: z=0 → 0 &nbsp;|&nbsp; z=1 → 0.76 &nbsp;|&nbsp; z=-1 → -0.76</p>
+      </div>
+      <div class="card card-orange">
+        <h3>Softmax</h3>
+        <div class="formula">softmax(zᵢ) = eᶻⁱ / Σ eᶻʲ</div>
+        <p style="font-size:0.85rem;">Output range: <strong>0 to 1, sums to 1</strong></p>
+        <p style="font-size:0.85rem;"><span class="pill pill-green">Good for</span> Multi-class output — converts scores to probabilities</p>
+        <p style="font-size:0.85rem;">Example: [2.0, 1.0, 0.1] → [0.70, 0.24, 0.06]</p>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Function</th><th>Range</th><th>Typical Use</th><th>Advantage</th></tr></thead>
+        <tbody>
+          <tr><td><code>Sigmoid</code></td><td>0 to 1</td><td>Binary output layer</td><td>Probability interpretation</td></tr>
+          <tr><td><code>ReLU</code></td><td>0 to ∞</td><td>Hidden layers (images)</td><td>Fast, no vanishing gradient</td></tr>
+          <tr><td><code>Tanh</code></td><td>-1 to 1</td><td>Hidden layers (text/NLP)</td><td>Zero-centered</td></tr>
+          <tr><td><code>Softmax</code></td><td>0 to 1</td><td>Multi-class output</td><td>Probabilities sum to 1</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- S5: Forward Pass -->
+  <section id="s5">
+    <h2>5. Forward Pass — Step by Step with Numbers</h2>
+
+    <div class="highlight">
+      <strong>Scenario:</strong> Student studied 8 hrs, slept 7 hrs. Normalized: [0.8, 0.7]. We'll trace through the entire network manually.
+    </div>
+
+    <h3>Network Weights (randomly initialized)</h3>
+    <div class="formula">
+      Input → Hidden (2 inputs × 3 hidden neurons = 6 weights + 3 biases):<br/>
+      W₁ = [[0.5, -0.3], [0.4, 0.6], [-0.2, 0.8]]<br/>
+      b₁ = [0.1, -0.1, 0.2]<br/><br/>
+      Hidden → Output (3 inputs × 1 output = 3 weights + 1 bias):<br/>
+      W₂ = [0.7, 0.3, -0.5]<br/>
+      b₂ = 0.05
+    </div>
+
+    <h3>Step 1 — Hidden Layer (Weighted Sum)</h3>
+    <div class="formula">
+      h₁_z = (0.8×0.5) + (0.7×-0.3) + 0.1 = 0.40 - 0.21 + 0.10 = <strong>0.29</strong><br/>
+      h₂_z = (0.8×0.4) + (0.7×0.6) + (-0.1) = 0.32 + 0.42 - 0.10 = <strong>0.64</strong><br/>
+      h₃_z = (0.8×-0.2) + (0.7×0.8) + 0.2 = -0.16 + 0.56 + 0.20 = <strong>0.60</strong>
+    </div>
+
+    <h3>Step 2 — Apply Sigmoid Activation to Hidden Layer</h3>
+    <div class="formula">
+      h₁ = sigmoid(0.29) = <strong>0.572</strong><br/>
+      h₂ = sigmoid(0.64) = <strong>0.655</strong><br/>
+      h₃ = sigmoid(0.60) = <strong>0.646</strong>
+    </div>
+
+    <h3>Step 3 — Output Layer (Weighted Sum)</h3>
+    <div class="formula">
+      out_z = (0.572×0.7) + (0.655×0.3) + (0.646×-0.5) + 0.05<br/>
+            = 0.400 + 0.197 - 0.323 + 0.050<br/>
+            = <strong>0.324</strong>
+    </div>
+
+    <h3>Step 4 — Apply Sigmoid to Output</h3>
+    <div class="formula">
+      ŷ = sigmoid(0.324) = 1 / (1 + e⁻⁰·³²⁴) = <strong>0.580</strong>
+    </div>
+
+    <div class="card card-green">
+      <h3>Interpretation</h3>
+      <p>Output = <strong>0.580</strong> → 58% probability of Passing.</p>
+      <p>Decision threshold = 0.5 → Since 0.580 &gt; 0.5, prediction = <span class="pill pill-green">PASS ✓</span></p>
+      <p>But this is with random weights — the network needs training to get the weights right.</p>
+    </div>
+
+    <h3>Full Forward Pass Pipeline</h3>
+    <div class="pipeline">
+      <div class="pipe-box cyan">[0.8, 0.7]<br/><span style="font-size:0.7rem">Inputs</span></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Weighted<br/>Sum Σ</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Sigmoid<br/>f(z)</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Weighted<br/>Sum Σ</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Sigmoid<br/>f(z)</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box yellow">ŷ = 0.58<br/><span style="font-size:0.7rem">Prediction</span></div>
+    </div>
+  </section>
+
+  <!-- S6: Loss & Backprop -->
+  <section id="s6">
+    <h2>6. Loss Function & Backpropagation</h2>
+
+    <div class="grid-2">
+      <div class="card card-red">
+        <h3>Loss Function</h3>
+        <p style="font-size:0.88rem;">Measures how wrong the prediction is. The goal of training is to <strong>minimize loss</strong>.</p>
+        <div class="formula" style="font-size:0.8rem;">
+          Binary Cross-Entropy:<br/>
+          L = -[y·log(ŷ) + (1-y)·log(1-ŷ)]
+        </div>
+        <p style="font-size:0.85rem;">If real y=1 (Pass) and ŷ=0.58:<br/>
+        L = -[1×log(0.58) + 0×log(0.42)] = -log(0.58) = <strong>0.544</strong></p>
+        <p style="font-size:0.85rem;">If ŷ were 0.99 (very confident, correct):<br/>
+        L = -log(0.99) = <strong>0.01</strong> (low loss ✓)</p>
+      </div>
+      <div class="card card-orange">
+        <h3>Common Loss Functions</h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Task</th><th>Loss Function</th></tr></thead>
+            <tbody>
+              <tr><td>Binary classification</td><td>Binary Cross-Entropy</td></tr>
+              <tr><td>Multi-class classification</td><td>Categorical Cross-Entropy</td></tr>
+              <tr><td>Regression</td><td>Mean Squared Error (MSE)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <h3>Backpropagation — How the Network Learns</h3>
+    <div class="callout">
+      <div class="callout-icon">🔄</div>
+      <div class="callout-text">Backpropagation uses the chain rule of calculus to compute how much each weight contributed to the error. It then adjusts weights to reduce the loss — moving a small step in the direction of lower error.</div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-body"><strong>Forward Pass</strong> — compute prediction ŷ through all layers.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-body"><strong>Compute Loss</strong> — measure how wrong ŷ is compared to true label y.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-body"><strong>Compute Gradients</strong> — starting from output layer, work backwards. For each weight w: ∂L/∂w = how much does loss change if w changes slightly?</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">4</div>
+      <div class="step-body"><strong>Update Weights</strong> — nudge each weight in the direction that reduces loss: <code>w = w - learning_rate × ∂L/∂w</code></div>
+    </div>
+
+    <div class="formula">
+      Weight update rule (Gradient Descent):<br/>
+      w_new = w_old - η × (∂Loss / ∂w)<br/><br/>
+      Example: w=0.7, gradient=0.12, learning_rate η=0.1<br/>
+      w_new = 0.7 - 0.1 × 0.12 = 0.7 - 0.012 = <strong>0.688</strong>
+    </div>
+
+    <div class="highlight">
+      <strong>Intuition:</strong> If increasing w makes the loss go up (positive gradient), we decrease w. If increasing w makes loss go down (negative gradient), we increase w. The learning rate η controls how big each step is.
+    </div>
+  </section>
+
+  <!-- S7: Training Loop -->
+  <section id="s7">
+    <h2>7. The Training Loop</h2>
+
+    <div class="pipeline">
+      <div class="pipe-box cyan">Initialize<br/>Weights</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Forward<br/>Pass</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box red">Compute<br/>Loss</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box orange">Backward<br/>Pass</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Update<br/>Weights</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box green">Repeat<br/>N epochs</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card card-blue">
+        <h4>Epoch</h4>
+        <p style="font-size:0.85rem;">One full pass through the entire training dataset. Training typically runs 10–1000 epochs.</p>
+      </div>
+      <div class="card card-purple">
+        <h4>Batch Size</h4>
+        <p style="font-size:0.85rem;">Number of samples processed before updating weights. Mini-batch (32–256) balances speed and stability.</p>
+      </div>
+      <div class="card card-green">
+        <h4>Learning Rate η</h4>
+        <p style="font-size:0.85rem;">Controls step size during weight updates. Too large = overshoots. Too small = slow convergence. Typical: 0.001–0.01.</p>
+      </div>
+    </div>
+
+    <h3>Loss Decreasing Over Epochs</h3>
+    <div class="card">
+      <div class="bar-row">
+        <span class="bar-label">Epoch 1</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:95%;background:var(--red);">0.95</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Epoch 10</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:70%;background:var(--orange);">0.70</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Epoch 50</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:35%;background:var(--yellow);">0.35</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Epoch 100</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:15%;background:var(--green);">0.15</div></div>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">Epoch 200</span>
+        <div class="bar-bg"><div class="bar-fill" style="width:5%;background:var(--cyan);">0.05</div></div>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Part 1 Summary</h3>
+      <ul>
+        <li>An ANN is made of layers of neurons. Each neuron computes a weighted sum then applies an activation function.</li>
+        <li>Forward pass: input flows through layers to produce a prediction.</li>
+        <li>Loss measures the error. Backpropagation computes gradients. Gradient descent updates weights.</li>
+        <li>After many epochs, the network learns weights that make accurate predictions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================= PART 2 ============================= -->
+  <div class="part-banner" style="border-left-color:var(--blue);">
+    <h2>Part 2 — Grayscale Image Processing</h2>
+    <p>How a pure ANN handles a single-channel (grayscale) image — every pixel becomes an input neuron.</p>
+  </div>
+
+  <!-- S8: What is Grayscale -->
+  <section id="s8">
+    <h2>8. What is a Grayscale Image?</h2>
+
+    <div class="grid-2">
+      <div class="card card-blue">
+        <h3>Single Channel</h3>
+        <ul>
+          <li>Each pixel = <strong>one number</strong> (0–255)</li>
+          <li><strong>0</strong> = pure black</li>
+          <li><strong>255</strong> = pure white</li>
+          <li>128 = mid-grey</li>
+          <li>No color information — just brightness</li>
+          <li>File size: smaller than RGB (1× the data)</li>
+        </ul>
+      </div>
+      <div class="card card-purple">
+        <h3>Why Use Grayscale First?</h3>
+        <ul>
+          <li>Simpler: 1 channel instead of 3</li>
+          <li>Fewer inputs to the ANN → easier to understand</li>
+          <li>Enough for many tasks: digit recognition, edge detection</li>
+          <li>Famous MNIST dataset uses 28×28 grayscale images</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Example: 4×4 Grayscale Image of a Bright Region</h3>
+    <div class="card">
+      <p style="font-size:0.85rem;margin-bottom:12px;">Each cell shows the pixel value (0–255). Darker = lower number, brighter = higher number.</p>
+      <div style="overflow-x:auto;">
+        <div class="px-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="px-cell" style="background:rgb(10,10,10);color:#aaa;">10</div>
+          <div class="px-cell" style="background:rgb(30,30,30);color:#aaa;">30</div>
+          <div class="px-cell" style="background:rgb(200,200,200);color:#333;">200</div>
+          <div class="px-cell" style="background:rgb(220,220,220);color:#333;">220</div>
+          <div class="px-cell" style="background:rgb(5,5,5);color:#aaa;">5</div>
+          <div class="px-cell" style="background:rgb(50,50,50);color:#aaa;">50</div>
+          <div class="px-cell" style="background:rgb(210,210,210);color:#333;">210</div>
+          <div class="px-cell" style="background:rgb(240,240,240);color:#333;">240</div>
+          <div class="px-cell" style="background:rgb(15,15,15);color:#aaa;">15</div>
+          <div class="px-cell" style="background:rgb(80,80,80);color:#aaa;">80</div>
+          <div class="px-cell" style="background:rgb(190,190,190);color:#333;">190</div>
+          <div class="px-cell" style="background:rgb(230,230,230);color:#333;">230</div>
+          <div class="px-cell" style="background:rgb(20,20,20);color:#aaa;">20</div>
+          <div class="px-cell" style="background:rgb(60,60,60);color:#aaa;">60</div>
+          <div class="px-cell" style="background:rgb(200,200,200);color:#333;">200</div>
+          <div class="px-cell" style="background:rgb(250,250,250);color:#333;">250</div>
+        </div>
+      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-top:10px;">4×4 = 16 pixels. A 28×28 MNIST digit = 784 pixels.</p>
+    </div>
+  </section>
+
+  <!-- S9: Flattening -->
+  <section id="s9">
+    <h2>9. Flattening — Image to 1D Vector</h2>
+
+    <div class="callout">
+      <div class="callout-icon">📐</div>
+      <div class="callout-text">An ANN's input layer is a <strong>1D row of neurons</strong>. A 2D image (grid of pixels) must be <strong>flattened</strong> into a 1D vector. This is done by reading rows left-to-right, top-to-bottom.</div>
+    </div>
+
+    <h3>Flattening a 4×4 Image</h3>
+    <div class="formula">
+      4×4 image  →  flatten  →  16-element vector<br/>
+      Row 1: [10, 30, 200, 220]<br/>
+      Row 2: [5, 50, 210, 240]<br/>
+      Row 3: [15, 80, 190, 230]<br/>
+      Row 4: [20, 60, 200, 250]<br/><br/>
+      Flat: [10, 30, 200, 220, 5, 50, 210, 240, 15, 80, 190, 230, 20, 60, 200, 250]
+    </div>
+
+    <h3>Normalize to 0–1 (divide by 255)</h3>
+    <div class="formula">
+      [0.039, 0.118, 0.784, 0.863, 0.020, 0.196, 0.824, 0.941,<br/>
+       0.059, 0.314, 0.745, 0.902, 0.078, 0.235, 0.784, 0.980]
+    </div>
+
+    <div class="flat-vector">
+      <div class="fv-cell" style="background:rgba(57,211,83,.1);color:var(--cyan);border-color:var(--cyan);">0.04</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.1);color:var(--cyan);border-color:var(--cyan);">0.12</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.2);color:var(--blue);">0.78</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.25);color:var(--blue);">0.86</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.07);color:var(--cyan);border-color:var(--cyan);">0.02</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.12);color:var(--cyan);border-color:var(--cyan);">0.20</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.22);color:var(--blue);">0.82</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.3);color:var(--blue);">0.94</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.1);color:var(--cyan);border-color:var(--cyan);">0.06</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.15);color:var(--cyan);border-color:var(--cyan);">0.31</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.18);color:var(--blue);">0.75</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.27);color:var(--blue);">0.90</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.1);color:var(--cyan);border-color:var(--cyan);">0.08</div>
+      <div class="fv-cell" style="background:rgba(57,211,83,.13);color:var(--cyan);border-color:var(--cyan);">0.24</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.2);color:var(--blue);">0.78</div>
+      <div class="fv-cell" style="background:rgba(88,166,255,.32);color:var(--blue);">0.98</div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);">Blue = bright pixel. Teal = dark pixel. This is the ANN's raw input.</p>
+
+    <div class="highlight">
+      <strong>For a real 8×8 image:</strong> 8 × 8 = 64 pixels → 64 input neurons<br/>
+      <strong>For MNIST 28×28:</strong> 28 × 28 = 784 pixels → 784 input neurons<br/>
+      <strong>For a 224×224 image:</strong> 224 × 224 = 50,176 input neurons (!!)
+    </div>
+  </section>
+
+  <!-- S10: 8x8 forward pass -->
+  <section id="s10">
+    <h2>10. Full Example: 8×8 Grayscale → ANN</h2>
+
+    <div class="callout">
+      <div class="callout-icon">🔢</div>
+      <div class="callout-text"><strong>Task:</strong> Classify an 8×8 grayscale image as one of 3 classes: <span class="pill pill-cyan">Dark</span> <span class="pill pill-blue">Medium</span> <span class="pill pill-yellow">Bright</span> — based on average brightness. A simple but illustrative example.</div>
+    </div>
+
+    <h3>8×8 Grayscale Image (Raw Pixel Values)</h3>
+    <div style="overflow-x:auto;">
+      <div class="px-grid" style="grid-template-columns:repeat(8,1fr);">
+        <!-- Row 1 -->
+        <div class="px-cell" style="background:rgb(20,20,20);color:#888;">20</div>
+        <div class="px-cell" style="background:rgb(30,30,30);color:#888;">30</div>
+        <div class="px-cell" style="background:rgb(40,40,40);color:#888;">40</div>
+        <div class="px-cell" style="background:rgb(25,25,25);color:#888;">25</div>
+        <div class="px-cell" style="background:rgb(140,140,140);color:#333;">140</div>
+        <div class="px-cell" style="background:rgb(160,160,160);color:#333;">160</div>
+        <div class="px-cell" style="background:rgb(200,200,200);color:#333;">200</div>
+        <div class="px-cell" style="background:rgb(220,220,220);color:#333;">220</div>
+        <!-- Row 2 -->
+        <div class="px-cell" style="background:rgb(35,35,35);color:#888;">35</div>
+        <div class="px-cell" style="background:rgb(50,50,50);color:#888;">50</div>
+        <div class="px-cell" style="background:rgb(60,60,60);color:#888;">60</div>
+        <div class="px-cell" style="background:rgb(45,45,45);color:#888;">45</div>
+        <div class="px-cell" style="background:rgb(170,170,170);color:#333;">170</div>
+        <div class="px-cell" style="background:rgb(180,180,180);color:#333;">180</div>
+        <div class="px-cell" style="background:rgb(210,210,210);color:#333;">210</div>
+        <div class="px-cell" style="background:rgb(240,240,240);color:#333;">240</div>
+        <!-- Row 3 -->
+        <div class="px-cell" style="background:rgb(15,15,15);color:#888;">15</div>
+        <div class="px-cell" style="background:rgb(25,25,25);color:#888;">25</div>
+        <div class="px-cell" style="background:rgb(55,55,55);color:#888;">55</div>
+        <div class="px-cell" style="background:rgb(30,30,30);color:#888;">30</div>
+        <div class="px-cell" style="background:rgb(150,150,150);color:#333;">150</div>
+        <div class="px-cell" style="background:rgb(190,190,190);color:#333;">190</div>
+        <div class="px-cell" style="background:rgb(215,215,215);color:#333;">215</div>
+        <div class="px-cell" style="background:rgb(235,235,235);color:#333;">235</div>
+        <!-- Row 4 -->
+        <div class="px-cell" style="background:rgb(10,10,10);color:#888;">10</div>
+        <div class="px-cell" style="background:rgb(20,20,20);color:#888;">20</div>
+        <div class="px-cell" style="background:rgb(30,30,30);color:#888;">30</div>
+        <div class="px-cell" style="background:rgb(35,35,35);color:#888;">35</div>
+        <div class="px-cell" style="background:rgb(145,145,145);color:#333;">145</div>
+        <div class="px-cell" style="background:rgb(175,175,175);color:#333;">175</div>
+        <div class="px-cell" style="background:rgb(205,205,205);color:#333;">205</div>
+        <div class="px-cell" style="background:rgb(245,245,245);color:#333;">245</div>
+        <!-- Rows 5-8 abbreviated -->
+        <div class="px-cell" style="background:rgb(22,22,22);color:#888;">22</div>
+        <div class="px-cell" style="background:rgb(32,32,32);color:#888;">32</div>
+        <div class="px-cell" style="background:rgb(42,42,42);color:#888;">42</div>
+        <div class="px-cell" style="background:rgb(28,28,28);color:#888;">28</div>
+        <div class="px-cell" style="background:rgb(155,155,155);color:#333;">155</div>
+        <div class="px-cell" style="background:rgb(165,165,165);color:#333;">165</div>
+        <div class="px-cell" style="background:rgb(208,208,208);color:#333;">208</div>
+        <div class="px-cell" style="background:rgb(228,228,228);color:#333;">228</div>
+        <div class="px-cell" style="background:rgb(40,40,40);color:#888;">40</div>
+        <div class="px-cell" style="background:rgb(55,55,55);color:#888;">55</div>
+        <div class="px-cell" style="background:rgb(65,65,65);color:#888;">65</div>
+        <div class="px-cell" style="background:rgb(50,50,50);color:#888;">50</div>
+        <div class="px-cell" style="background:rgb(160,160,160);color:#333;">160</div>
+        <div class="px-cell" style="background:rgb(185,185,185);color:#333;">185</div>
+        <div class="px-cell" style="background:rgb(212,212,212);color:#333;">212</div>
+        <div class="px-cell" style="background:rgb(242,242,242);color:#333;">242</div>
+        <div class="px-cell" style="background:rgb(18,18,18);color:#888;">18</div>
+        <div class="px-cell" style="background:rgb(28,28,28);color:#888;">28</div>
+        <div class="px-cell" style="background:rgb(38,38,38);color:#888;">38</div>
+        <div class="px-cell" style="background:rgb(22,22,22);color:#888;">22</div>
+        <div class="px-cell" style="background:rgb(148,148,148);color:#333;">148</div>
+        <div class="px-cell" style="background:rgb(172,172,172);color:#333;">172</div>
+        <div class="px-cell" style="background:rgb(202,202,202);color:#333;">202</div>
+        <div class="px-cell" style="background:rgb(238,238,238);color:#333;">238</div>
+        <div class="px-cell" style="background:rgb(25,25,25);color:#888;">25</div>
+        <div class="px-cell" style="background:rgb(35,35,35);color:#888;">35</div>
+        <div class="px-cell" style="background:rgb(45,45,45);color:#888;">45</div>
+        <div class="px-cell" style="background:rgb(30,30,30);color:#888;">30</div>
+        <div class="px-cell" style="background:rgb(152,152,152);color:#333;">152</div>
+        <div class="px-cell" style="background:rgb(178,178,178);color:#333;">178</div>
+        <div class="px-cell" style="background:rgb(206,206,206);color:#333;">206</div>
+        <div class="px-cell" style="background:rgb(243,243,243);color:#333;">243</div>
+      </div>
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);margin-top:8px;">8×8 = <strong>64 pixels</strong>. Left columns are dark (0–65), right columns are bright (140–245) — showing a brightness gradient.</p>
+
+    <h3>Network Architecture for This Task</h3>
+    <div class="pipeline">
+      <div class="pipe-box cyan">64 inputs<br/>(pixels)</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">32 hidden<br/>neurons</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">16 hidden<br/>neurons</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box yellow">3 outputs<br/>(classes)</div>
+    </div>
+
+    <div class="formula">
+      Total parameters:<br/>
+      Layer 1: (64 inputs × 32 neurons) + 32 biases = 2,080 parameters<br/>
+      Layer 2: (32 inputs × 16 neurons) + 16 biases = 528 parameters<br/>
+      Output:  (16 inputs × 3 neurons) + 3 biases = 51 parameters<br/>
+      Total: <strong>2,659 trainable parameters</strong>
+    </div>
+  </section>
+
+  <!-- S11: Hidden Layer Processing -->
+  <section id="s11">
+    <h2>11. Hidden Layer Processing — What Neurons Learn</h2>
+
+    <div class="callout">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text">During training, each neuron in the hidden layer learns to detect a specific pattern in the pixel values. With enough neurons and epochs, the network learns which pixel combinations indicate "Dark", "Medium", or "Bright".</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card card-cyan">
+        <h4>Hidden Neuron A</h4>
+        <p style="font-size:0.85rem;">Learns to detect <strong>high values in left columns</strong> (pixels 0–31). High weight on left pixels, negative weight on right pixels.</p>
+        <div class="formula" style="font-size:0.75rem;">z_A = Σ(left_pixels × large_weights) + Σ(right_pixels × neg_weights)</div>
+      </div>
+      <div class="card card-blue">
+        <h4>Hidden Neuron B</h4>
+        <p style="font-size:0.85rem;">Learns to detect <strong>average brightness</strong> across all 64 pixels. Roughly equal weights on all inputs.</p>
+        <div class="formula" style="font-size:0.75rem;">z_B = Σ(all_pixels × ~equal_weights)</div>
+      </div>
+      <div class="card card-yellow">
+        <h4>Hidden Neuron C</h4>
+        <p style="font-size:0.85rem;">Learns to detect <strong>high values in right columns</strong> (pixels 32–63). High weight on right pixels.</p>
+        <div class="formula" style="font-size:0.75rem;">z_C = Σ(right_pixels × large_weights)</div>
+      </div>
+    </div>
+
+    <h3>Layer 1 → Layer 2 → Output (Abbreviated)</h3>
+    <div class="formula">
+      Input: 64 pixel values (normalized 0–1) [0.08, 0.12, 0.16, ..., 0.55, 0.63, 0.79, 0.96]<br/><br/>
+      After Layer 1 (ReLU): 32 neuron activations<br/>
+      [0.0, 0.32, 0.0, 0.71, 0.15, 0.0, 0.88, 0.0, 0.42, ...]  ← many zeros (ReLU kills negatives)<br/><br/>
+      After Layer 2 (ReLU): 16 neuron activations<br/>
+      [0.55, 0.0, 0.72, 0.0, 0.34, 0.81, ...]<br/><br/>
+      Output scores (before softmax): [1.2, 0.3, 3.7]<br/>
+      After Softmax: [0.07, 0.03, <strong>0.90</strong>]<br/>
+      Prediction: Class 2 = <span class="pill pill-yellow">BRIGHT ✓</span>
+    </div>
+  </section>
+
+  <!-- S12: ANN Classifies Grayscale -->
+  <section id="s12">
+    <h2>12. How ANN Classifies a Grayscale Image</h2>
+
+    <h3>Complete Grayscale Processing Pipeline</h3>
+    <div class="pipeline">
+      <div class="pipe-box blue">8×8<br/>Image</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box cyan">÷255<br/>Normalize</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box cyan">Flatten<br/>64 values</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Layer 1<br/>32 neurons</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Layer 2<br/>16 neurons</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Softmax<br/>3 classes</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box yellow">Class<br/>Label</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-green">
+        <h3>What ANN Can Do with Grayscale</h3>
+        <ul>
+          <li><span class="pill pill-green">Good</span> Digit recognition (MNIST)</li>
+          <li><span class="pill pill-green">Good</span> Simple shape classification</li>
+          <li><span class="pill pill-green">Good</span> Brightness-based sorting</li>
+          <li><span class="pill pill-green">OK</span> Face recognition on small images</li>
+          <li><span class="pill pill-green">OK</span> Medical scan classification (if small)</li>
+        </ul>
+      </div>
+      <div class="card card-red">
+        <h3>Limitations of ANN on Grayscale</h3>
+        <ul>
+          <li><span class="pill pill-red">Bad</span> Loses spatial relationships (2D → 1D)</li>
+          <li><span class="pill pill-red">Bad</span> Pixel at (3,4) treated same as (7,1)</li>
+          <li><span class="pill pill-red">Bad</span> Not translation-invariant (cat in top-left ≠ cat in bottom-right)</li>
+          <li><span class="pill pill-red">Bad</span> Explodes with large images (224×224 = 50K inputs)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Part 2 Summary</h3>
+      <ul>
+        <li>Grayscale: 1 channel, each pixel = 1 number (0–255).</li>
+        <li>Flatten: 2D grid → 1D vector. 8×8 → 64 inputs. MNIST 28×28 → 784 inputs.</li>
+        <li>Normalize: divide by 255 → 0 to 1 range for stable training.</li>
+        <li>ANN processes these 64 numbers through fully connected layers, outputs class probabilities via Softmax.</li>
+        <li>It works but loses all spatial information — that's why CNNs are better for images.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================= PART 3 ============================= -->
+  <div class="part-banner" style="border-left-color:var(--orange);">
+    <h2>Part 3 — RGB Image Processing</h2>
+    <p>How an ANN handles a 3-channel (RGB) color image — now each pixel has three numbers.</p>
+  </div>
+
+  <!-- S13: What is RGB -->
+  <section id="s13">
+    <h2>13. What is an RGB Image?</h2>
+
+    <div class="callout">
+      <div class="callout-icon">🎨</div>
+      <div class="callout-text">RGB = <strong>Red, Green, Blue</strong>. Every pixel in a color image has <strong>three values</strong> — one for each color channel — each ranging from 0 to 255. Together they mix to produce the pixel's color.</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card" style="border-left:3px solid #ff4444;">
+        <h3 style="color:#ff6666;">Red Channel</h3>
+        <p style="font-size:0.85rem;">Controls how much red light. 0 = no red, 255 = maximum red. Stored as a separate 2D matrix.</p>
+        <div class="formula" style="font-size:0.78rem;color:#ff6666;">
+          [[255, 200, 10],<br/>
+           [230, 180, 5],<br/>
+           [240, 190, 8]]
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid #44ff44;">
+        <h3 style="color:#66ff66;">Green Channel</h3>
+        <p style="font-size:0.85rem;">Controls how much green light. 0 = no green, 255 = maximum green. Same spatial size as red.</p>
+        <div class="formula" style="font-size:0.78rem;color:#66ff66;">
+          [[10, 50, 200],<br/>
+           [15, 60, 220],<br/>
+           [12, 55, 210]]
+        </div>
+      </div>
+      <div class="card" style="border-left:3px solid #4444ff;">
+        <h3 style="color:#8888ff;">Blue Channel</h3>
+        <p style="font-size:0.85rem;">Controls how much blue light. 0 = no blue, 255 = maximum blue. Same spatial size as red & green.</p>
+        <div class="formula" style="font-size:0.78rem;color:#8888ff;">
+          [[5, 30, 240],<br/>
+           [8, 40, 230],<br/>
+           [6, 35, 245]]
+        </div>
+      </div>
+    </div>
+
+    <h3>How RGB Mixes Into Colors</h3>
+    <div class="grid-4">
+      <div class="card" style="background:rgba(255,0,0,.15);border-color:rgba(255,0,0,.4);text-align:center;">
+        <div style="font-size:1.4rem;">🔴</div>
+        <p style="font-size:0.82rem;margin:0;"><strong>R=255 G=0 B=0</strong><br/>Pure Red</p>
+      </div>
+      <div class="card" style="background:rgba(0,255,0,.1);border-color:rgba(0,255,0,.4);text-align:center;">
+        <div style="font-size:1.4rem;">🟢</div>
+        <p style="font-size:0.82rem;margin:0;"><strong>R=0 G=255 B=0</strong><br/>Pure Green</p>
+      </div>
+      <div class="card" style="background:rgba(0,100,255,.15);border-color:rgba(0,100,255,.4);text-align:center;">
+        <div style="font-size:1.4rem;">🔵</div>
+        <p style="font-size:0.82rem;margin:0;"><strong>R=0 G=0 B=255</strong><br/>Pure Blue</p>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.3);text-align:center;">
+        <div style="font-size:1.4rem;">⬜</div>
+        <p style="font-size:0.82rem;margin:0;"><strong>R=255 G=255 B=255</strong><br/>White</p>
+      </div>
+    </div>
+
+    <div class="highlight">
+      <strong>Memory:</strong> A 8×8 grayscale image = 8×8×1 = <strong>64 values</strong>. The same image in RGB = 8×8×3 = <strong>192 values</strong> — exactly 3× more data.
+    </div>
+  </section>
+
+  <!-- S14: Flattening RGB -->
+  <section id="s14">
+    <h2>14. Flattening RGB — 8×8×3 = 192 Inputs</h2>
+
+    <div class="callout">
+      <div class="callout-icon">📦</div>
+      <div class="callout-text">For a pure ANN, we flatten all three channels into one long 1D vector. The most common approach is to concatenate the channels: all of Red, then all of Green, then all of Blue.</div>
+    </div>
+
+    <h3>Flattening Strategy for 8×8 RGB</h3>
+    <div class="formula">
+      Image shape: 8 rows × 8 cols × 3 channels = 192 values<br/><br/>
+      Option 1 — Channel-first (R then G then B):<br/>
+      [R₁, R₂, ..., R₆₄,  G₁, G₂, ..., G₆₄,  B₁, B₂, ..., B₆₄]<br/>
+      = 64 + 64 + 64 = <strong>192 inputs</strong><br/><br/>
+      Option 2 — Pixel-first (interleaved):<br/>
+      [R₁, G₁, B₁, R₂, G₂, B₂, ..., R₆₄, G₆₄, B₆₄]<br/>
+      = 192 inputs (same count, different order)
+    </div>
+
+    <h3>Example: Single Pixel Expanded to 3 Values</h3>
+    <div class="grid-3">
+      <div class="card" style="text-align:center;background:rgba(255,50,50,.1);border-color:rgba(255,50,50,.4);">
+        <div style="font-size:2rem;background:rgb(210,80,60);border-radius:8px;width:60px;height:60px;margin:0 auto 10px;"></div>
+        <p style="font-size:0.82rem;margin:0;color:#ff6666;"><strong>Pixel (2,5) = Orange-ish</strong><br/>R = 210 → 0.824<br/>G = 80 → 0.314<br/>B = 60 → 0.235</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div style="font-size:1.6rem;margin-bottom:8px;">→</div>
+        <p style="font-size:0.85rem;color:var(--muted);">3 values enter the ANN at 3 separate input positions</p>
+      </div>
+      <div class="card card-blue" style="text-align:center;">
+        <h4>ANN Input Positions</h4>
+        <p style="font-size:0.82rem;">Input₂₁ = 0.824 (Red of pixel 2,5)<br/>Input₈₅ = 0.314 (Green of pixel 2,5)<br/>Input₁₄₉ = 0.235 (Blue of pixel 2,5)</p>
+      </div>
+    </div>
+
+    <h3>ANN Architecture for RGB Image Classification</h3>
+    <div class="pipeline">
+      <div class="pipe-box orange">8×8×3<br/>= 192</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box cyan">÷255<br/>Normalize</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box cyan">Flatten<br/>192 vals</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">128 hidden<br/>ReLU</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">64 hidden<br/>ReLU</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Softmax<br/>N classes</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box yellow">Prediction</div>
+    </div>
+
+    <div class="formula">
+      Parameters for 8×8 RGB ANN:<br/>
+      Layer 1: (192 × 128) + 128 = 24,704<br/>
+      Layer 2: (128 × 64) + 64 = 8,256<br/>
+      Output (10 classes): (64 × 10) + 10 = 650<br/>
+      Total: <strong>33,610 parameters</strong>  (vs 2,659 for grayscale same size!)
+    </div>
+  </section>
+
+  <!-- S15: RGB Forward Pass -->
+  <section id="s15">
+    <h2>15. RGB Forward Pass — Step by Step</h2>
+
+    <div class="callout">
+      <div class="callout-icon">🖼️</div>
+      <div class="callout-text"><strong>Task:</strong> Classify a small 4×4 RGB image into: <span class="pill pill-red">Red Scene</span> <span class="pill pill-green">Green Scene</span> <span class="pill pill-blue" style="color:#8888ff;border-color:#8888ff;">Blue Scene</span>. We'll trace the full forward pass with real channel data.</div>
+    </div>
+
+    <h3>Sample 4×4 RGB Image (Mostly Red)</h3>
+    <div class="grid-3">
+      <div>
+        <h4 style="color:#ff6666;">R Channel</h4>
+        <div class="px-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="px-cell" style="background:rgba(200,0,0,.6);color:#faa;">200</div>
+          <div class="px-cell" style="background:rgba(210,0,0,.6);color:#faa;">210</div>
+          <div class="px-cell" style="background:rgba(190,0,0,.6);color:#faa;">190</div>
+          <div class="px-cell" style="background:rgba(220,0,0,.6);color:#faa;">220</div>
+          <div class="px-cell" style="background:rgba(180,0,0,.6);color:#faa;">180</div>
+          <div class="px-cell" style="background:rgba(230,0,0,.6);color:#faa;">230</div>
+          <div class="px-cell" style="background:rgba(195,0,0,.6);color:#faa;">195</div>
+          <div class="px-cell" style="background:rgba(215,0,0,.6);color:#faa;">215</div>
+          <div class="px-cell" style="background:rgba(205,0,0,.6);color:#faa;">205</div>
+          <div class="px-cell" style="background:rgba(225,0,0,.6);color:#faa;">225</div>
+          <div class="px-cell" style="background:rgba(185,0,0,.6);color:#faa;">185</div>
+          <div class="px-cell" style="background:rgba(235,0,0,.6);color:#faa;">235</div>
+          <div class="px-cell" style="background:rgba(210,0,0,.6);color:#faa;">210</div>
+          <div class="px-cell" style="background:rgba(198,0,0,.6);color:#faa;">198</div>
+          <div class="px-cell" style="background:rgba(222,0,0,.6);color:#faa;">222</div>
+          <div class="px-cell" style="background:rgba(240,0,0,.6);color:#faa;">240</div>
+        </div>
+      </div>
+      <div>
+        <h4 style="color:#66cc66;">G Channel</h4>
+        <div class="px-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="px-cell" style="background:rgba(0,20,0,.7);color:#6c6;">20</div>
+          <div class="px-cell" style="background:rgba(0,25,0,.7);color:#6c6;">25</div>
+          <div class="px-cell" style="background:rgba(0,15,0,.7);color:#6c6;">15</div>
+          <div class="px-cell" style="background:rgba(0,30,0,.7);color:#6c6;">30</div>
+          <div class="px-cell" style="background:rgba(0,18,0,.7);color:#6c6;">18</div>
+          <div class="px-cell" style="background:rgba(0,22,0,.7);color:#6c6;">22</div>
+          <div class="px-cell" style="background:rgba(0,28,0,.7);color:#6c6;">28</div>
+          <div class="px-cell" style="background:rgba(0,12,0,.7);color:#6c6;">12</div>
+          <div class="px-cell" style="background:rgba(0,24,0,.7);color:#6c6;">24</div>
+          <div class="px-cell" style="background:rgba(0,16,0,.7);color:#6c6;">16</div>
+          <div class="px-cell" style="background:rgba(0,32,0,.7);color:#6c6;">32</div>
+          <div class="px-cell" style="background:rgba(0,14,0,.7);color:#6c6;">14</div>
+          <div class="px-cell" style="background:rgba(0,20,0,.7);color:#6c6;">20</div>
+          <div class="px-cell" style="background:rgba(0,26,0,.7);color:#6c6;">26</div>
+          <div class="px-cell" style="background:rgba(0,18,0,.7);color:#6c6;">18</div>
+          <div class="px-cell" style="background:rgba(0,22,0,.7);color:#6c6;">22</div>
+        </div>
+      </div>
+      <div>
+        <h4 style="color:#8888ff;">B Channel</h4>
+        <div class="px-grid" style="grid-template-columns:repeat(4,1fr);">
+          <div class="px-cell" style="background:rgba(0,0,15,.7);color:#aaf;">15</div>
+          <div class="px-cell" style="background:rgba(0,0,10,.7);color:#aaf;">10</div>
+          <div class="px-cell" style="background:rgba(0,0,20,.7);color:#aaf;">20</div>
+          <div class="px-cell" style="background:rgba(0,0,8,.7);color:#aaf;">8</div>
+          <div class="px-cell" style="background:rgba(0,0,12,.7);color:#aaf;">12</div>
+          <div class="px-cell" style="background:rgba(0,0,18,.7);color:#aaf;">18</div>
+          <div class="px-cell" style="background:rgba(0,0,5,.7);color:#aaf;">5</div>
+          <div class="px-cell" style="background:rgba(0,0,22,.7);color:#aaf;">22</div>
+          <div class="px-cell" style="background:rgba(0,0,14,.7);color:#aaf;">14</div>
+          <div class="px-cell" style="background:rgba(0,0,9,.7);color:#aaf;">9</div>
+          <div class="px-cell" style="background:rgba(0,0,25,.7);color:#aaf;">25</div>
+          <div class="px-cell" style="background:rgba(0,0,11,.7);color:#aaf;">11</div>
+          <div class="px-cell" style="background:rgba(0,0,16,.7);color:#aaf;">16</div>
+          <div class="px-cell" style="background:rgba(0,0,20,.7);color:#aaf;">20</div>
+          <div class="px-cell" style="background:rgba(0,0,13,.7);color:#aaf;">13</div>
+          <div class="px-cell" style="background:rgba(0,0,7,.7);color:#aaf;">7</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Flatten & Normalize All 3 Channels → 48 Inputs</h3>
+    <div class="formula">
+      Flattened R (÷255): [0.784, 0.824, 0.745, 0.863, 0.706, 0.902, 0.765, 0.843,<br/>
+                            0.804, 0.882, 0.725, 0.922, 0.824, 0.776, 0.871, 0.941]  (16 values)<br/><br/>
+      Flattened G (÷255): [0.078, 0.098, 0.059, 0.118, 0.071, 0.086, 0.110, 0.047,<br/>
+                            0.094, 0.063, 0.125, 0.055, 0.078, 0.102, 0.071, 0.086]  (16 values)<br/><br/>
+      Flattened B (÷255): [0.059, 0.039, 0.078, 0.031, 0.047, 0.071, 0.020, 0.086,<br/>
+                            0.055, 0.035, 0.098, 0.043, 0.063, 0.078, 0.051, 0.027]  (16 values)<br/><br/>
+      Combined input vector = [R₁..R₁₆, G₁..G₁₆, B₁..B₁₆] → <strong>48 inputs total</strong>
+    </div>
+
+    <h3>Forward Pass Through Hidden Layers</h3>
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-body"><strong>Layer 1 (24 neurons, ReLU):</strong> Each neuron computes weighted sum of all 48 inputs. High weights on R positions → detects "red dominance". After ReLU: many fire strongly.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-body"><strong>Layer 2 (12 neurons, ReLU):</strong> Combines layer 1 patterns. Neurons here represent higher-level features: "overall redness", "color balance ratio", etc.</div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-body"><strong>Output (3 neurons, Softmax):</strong> Raw scores → probabilities. Red neuron fires highest since R values dominated input.</div>
+    </div>
+
+    <div class="formula">
+      Output raw scores: [Red=3.8, Green=0.2, Blue=-0.4]<br/>
+      After Softmax:<br/>
+      P(Red)  = e³·⁸ / (e³·⁸ + e⁰·² + e⁻⁰·⁴) = 44.7 / (44.7 + 1.22 + 0.67) = <strong>0.958</strong><br/>
+      P(Green)= 1.22 / 46.6 = <strong>0.026</strong><br/>
+      P(Blue) = 0.67 / 46.6 = <strong>0.014</strong><br/><br/>
+      Prediction: <span style="color:var(--red);font-weight:700;">RED SCENE</span> with 95.8% confidence ✓
+    </div>
+  </section>
+
+  <!-- S16: Single vs Multi Channel Comparison -->
+  <section id="s16">
+    <h2>16. Grayscale vs RGB — Side-by-Side Comparison</h2>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Property</th><th>Grayscale ANN</th><th>RGB ANN</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Channels</strong></td><td>1 (brightness only)</td><td>3 (R, G, B separately)</td></tr>
+          <tr><td><strong>Pixel info</strong></td><td>1 value per pixel</td><td>3 values per pixel</td></tr>
+          <tr><td><strong>8×8 inputs</strong></td><td>64 inputs</td><td>192 inputs (3×)</td></tr>
+          <tr><td><strong>28×28 inputs</strong></td><td>784 inputs</td><td>2,352 inputs</td></tr>
+          <tr><td><strong>Color info</strong></td><td>None — no color</td><td>Full color information</td></tr>
+          <tr><td><strong>Parameters</strong></td><td>Fewer (simpler)</td><td>3× more (complex)</td></tr>
+          <tr><td><strong>Training time</strong></td><td>Faster</td><td>Slower</td></tr>
+          <tr><td><strong>Use case</strong></td><td>Digits, edges, shapes</td><td>Color-sensitive tasks</td></tr>
+          <tr><td><strong>MNIST accuracy</strong></td><td>~98% (grayscale fine)</td><td>Not applicable</td></tr>
+          <tr><td><strong>CIFAR-10 accuracy</strong></td><td>~60% (loses color)</td><td>~70% (with color)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="vs-grid">
+      <div class="card card-blue">
+        <h3>Grayscale ANN — How It Sees</h3>
+        <p style="font-size:0.85rem;">Sees only brightness. A red apple and a green apple look the same if equally bright. Good enough for shape-based tasks.</p>
+        <div class="pipeline" style="flex-wrap:wrap;gap:4px;">
+          <div class="pipe-box cyan" style="font-size:0.7rem;">64 pixels<br/>(grey)</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box blue" style="font-size:0.7rem;">Hidden<br/>Layers</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box yellow" style="font-size:0.7rem;">Class</div>
+        </div>
+      </div>
+      <div class="card card-orange">
+        <h3>RGB ANN — How It Sees</h3>
+        <p style="font-size:0.85rem;">Sees all three color channels. A red apple and green apple have very different channel patterns. The ANN can leverage color as a feature.</p>
+        <div class="pipeline" style="flex-wrap:wrap;gap:4px;">
+          <div class="pipe-box orange" style="font-size:0.7rem;">192 vals<br/>(R+G+B)</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box blue" style="font-size:0.7rem;">Hidden<br/>Layers</div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-box yellow" style="font-size:0.7rem;">Class</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Key Insight: ANN Treats All Channels Equally</h3>
+    <div class="highlight">
+      In a pure ANN, all 192 values (R₁…R₆₄, G₁…G₆₄, B₁…B₆₄) enter as a flat list. The network doesn't "know" which values come from which channel — it just learns weights. But since red pixels will have consistently high values in positions 1–64 and low in 65–192 for a red scene, the network <strong>infers the channel structure from the patterns in data</strong> over many training examples.
+    </div>
+  </section>
+
+  <!-- S17: Why CNN beats ANN -->
+  <section id="s17">
+    <h2>17. Why CNN Beats ANN for Images</h2>
+
+    <div class="callout">
+      <div class="callout-icon">🔍</div>
+      <div class="callout-text">A pure ANN works on images but has fundamental limitations. Convolutional Neural Networks (CNN) were specifically designed to fix those limitations using the spatial structure of images.</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card card-red">
+        <h3>ANN Problems with Images</h3>
+        <ul>
+          <li><span class="pill pill-red">Problem</span> <strong>No spatial awareness:</strong> pixel at (0,0) has no connection to its neighbor at (0,1) in the learned structure</li>
+          <li><span class="pill pill-red">Problem</span> <strong>Not translation-invariant:</strong> a cat at top-left ≠ cat at bottom-right (different input positions!)</li>
+          <li><span class="pill pill-red">Problem</span> <strong>Too many parameters:</strong> 224×224×3 = 150K inputs → first hidden layer alone has millions of weights</li>
+          <li><span class="pill pill-red">Problem</span> <strong>No weight sharing:</strong> every spatial location uses completely different weights</li>
+        </ul>
+      </div>
+      <div class="card card-green">
+        <h3>How CNN Solves Each Problem</h3>
+        <ul>
+          <li><span class="pill pill-green">Solution</span> <strong>Convolution:</strong> filters slide over the 2D image, preserving spatial relationships between neighboring pixels</li>
+          <li><span class="pill pill-green">Solution</span> <strong>Weight sharing:</strong> same filter scans whole image — a cat detector works anywhere in the image</li>
+          <li><span class="pill pill-green">Solution</span> <strong>Pooling:</strong> reduces spatial size, building translation invariance</li>
+          <li><span class="pill pill-green">Solution</span> <strong>Far fewer parameters:</strong> a 3×3 filter = 9 weights (used everywhere!) vs millions for ANN</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Parameter Count Comparison</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Model</th><th>Input Size</th><th>First Layer Weights</th><th>Total Parameters</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-blue">ANN</span></td><td>28×28 grayscale</td><td>784 × 512 = 401,408</td><td>~500K</td></tr>
+          <tr><td><span class="pill pill-blue">ANN</span></td><td>224×224 RGB</td><td>150,528 × 1024 = 154M</td><td>~160M</td></tr>
+          <tr><td><span class="pill pill-green">CNN (LeNet)</span></td><td>28×28 grayscale</td><td>3×3×1×6 = 54 weights</td><td>~60K</td></tr>
+          <tr><td><span class="pill pill-green">CNN (ResNet-50)</span></td><td>224×224 RGB</td><td>7×7×3×64 = 9,408 weights</td><td>~25M</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>When to Use Each</h3>
+    <div class="grid-3">
+      <div class="card card-blue">
+        <h4>Use ANN when...</h4>
+        <ul style="font-size:0.85rem;">
+          <li>Tabular / structured data</li>
+          <li>Small images (&lt;32×32)</li>
+          <li>Features don't have spatial meaning</li>
+          <li>Quick baseline needed</li>
+          <li>Example: predict price, classify iris flower</li>
+        </ul>
+      </div>
+      <div class="card card-green">
+        <h4>Use CNN when...</h4>
+        <ul style="font-size:0.85rem;">
+          <li>Images (any size)</li>
+          <li>Spatial structure matters</li>
+          <li>Translation invariance needed</li>
+          <li>Object detection / segmentation</li>
+          <li>Example: detect cats, classify X-rays</li>
+        </ul>
+      </div>
+      <div class="card card-purple">
+        <h4>ANN + CNN Hybrid</h4>
+        <ul style="font-size:0.85rem;">
+          <li>CNN extracts image features</li>
+          <li>ANN (fully-connected) classifies</li>
+          <li>This is how YOLOv8, ResNet, VGG all work</li>
+          <li>The ANN head is the final layers of every CNN!</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h3>Final Summary — ANN on Images</h3>
+
+      <div class="grid-2">
+        <div>
+          <h4 style="color:var(--blue);margin-bottom:10px;">Grayscale (Single Channel)</h4>
+          <ul style="font-size:0.88rem;">
+            <li>1 value per pixel (0–255)</li>
+            <li>Flatten H×W → 1D vector</li>
+            <li>N inputs = H × W</li>
+            <li>Good for: digits, shapes, edges</li>
+            <li>Loses color, but keeps brightness</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="color:var(--orange);margin-bottom:10px;">RGB (Multi-Channel)</h4>
+          <ul style="font-size:0.88rem;">
+            <li>3 values per pixel (R, G, B each 0–255)</li>
+            <li>Flatten H×W×3 → 1D vector</li>
+            <li>N inputs = H × W × 3</li>
+            <li>Good for: color-sensitive tasks</li>
+            <li>Keeps color but 3× more parameters</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <h4 style="color:var(--purple);margin-bottom:10px;">The Key Limitation of Pure ANN on Images</h4>
+        <p style="font-size:0.88rem;">Flattening destroys the 2D spatial structure. Neighboring pixels lose their "neighbor" relationship in the flat vector. CNNs solve this by processing with sliding filters that preserve spatial context — which is why CNNs dominate all image tasks today. However, ANN principles (weights, biases, activations, forward pass, backpropagation) are the <strong>foundation of every CNN</strong>. A CNN's final classification layers ARE a small ANN. You now understand both.</p>
+      </div>
+    </div>
+
+    <div class="pipeline" style="margin-top:24px;">
+      <div class="pipe-box cyan">Image<br/>Input</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Flatten<br/>(ANN)</div>
+      <div class="pipe-arrow">OR</div>
+      <div class="pipe-box green">Convolve<br/>(CNN)</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box blue">Fully Connected<br/>ANN Head</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box purple">Softmax<br/>Output</div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box yellow">Class<br/>Label</div>
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<script>
+// ── FONT CONTROLLER ──
+(function(){
+  const slider = document.getElementById('fc-slider');
+  const valLbl = document.getElementById('fc-val');
+  const MIN=10, MAX=64, DEFAULT=16;
+
+  function applySize(px){
+    document.documentElement.style.fontSize = px + 'px';
+    valLbl.textContent = px + 'px';
+    const pct = ((px - MIN) / (MAX - MIN) * 100).toFixed(2) + '%';
+    slider.style.setProperty('--pct', pct);
+  }
+
+  slider.value = DEFAULT;
+  applySize(DEFAULT);
+  slider.addEventListener('input', () => applySize(+slider.value));
+})();
+
+// ── SIDEBAR ──
+(function(){
+  const sidebar = document.getElementById('sidebar');
+  const btn     = document.getElementById('sidebar-btn');
+  const backdrop= document.getElementById('backdrop');
+
+  function open(){
+    sidebar.classList.add('open');
+    btn.classList.add('shifted');
+    btn.textContent = '✕ Close';
+    document.body.classList.add('sb-open');
+    if(window.innerWidth < 900) backdrop.style.display='block';
+  }
+  function close(){
+    sidebar.classList.remove('open');
+    btn.classList.remove('shifted');
+    btn.textContent = 'Contents';
+    document.body.classList.remove('sb-open');
+    backdrop.style.display='none';
+  }
+
+  btn.addEventListener('click', () => sidebar.classList.contains('open') ? close() : open());
+  backdrop.addEventListener('click', close);
+
+  // Active link highlighting
+  const links = sidebar.querySelectorAll('a[href^="#"]');
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        links.forEach(a => a.classList.remove('active'));
+        const active = sidebar.querySelector(`a[href="#${e.target.id}"]`);
+        if(active){
+          active.classList.add('active');
+          active.scrollIntoView({block:'nearest'});
+        }
+      }
+    });
+  }, {rootMargin:'-10% 0px -80% 0px', threshold:0});
+
+  sections.forEach(s => obs.observe(s));
+
+  // Smooth close on link click (mobile)
+  links.forEach(a => a.addEventListener('click', () => {
+    if(window.innerWidth < 900) close();
+  }));
+})();
+</script>
+
+</body>
+</html>
