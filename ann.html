@@ -65,22 +65,32 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   color:var(--purple);padding:14px 20px 4px;font-weight:700;
 }
 #sidebar-btn{
-  position:fixed;top:50%;left:0;z-index:1600;
-  transform:translateY(-50%);
-  background:var(--blue);color:#000;
-  border:none;cursor:pointer;padding:10px 5px;
-  border-radius:0 6px 6px 0;
-  writing-mode:vertical-rl;font-size:0.7rem;font-weight:700;
-  transition:left .3s cubic-bezier(.4,0,.2,1);
-  letter-spacing:.05em;
+  position:fixed;top:16px;left:16px;z-index:1601;
+  background:rgba(28,35,51,.95);border:1px solid rgba(88,166,255,.3);
+  border-radius:8px;color:#90a8ff;
+  width:44px;height:44px;
+  cursor:pointer;padding:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  transition:background .2s;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);
 }
-#sidebar-btn.shifted{left:270px;}
+#sidebar-btn:hover{background:rgba(67,97,238,.25);}
+#sidebar-btn .bar{
+  display:block;width:20px;height:2px;
+  background:currentColor;border-radius:2px;
+  transition:transform .25s,opacity .25s;
+}
+#sidebar-btn.open .bar:nth-child(1){transform:translateY(7px) rotate(45deg);}
+#sidebar-btn.open .bar:nth-child(2){opacity:0;}
+#sidebar-btn.open .bar:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 #backdrop{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1400;
 }
-@media(min-width:900px){
+@media(min-width:1024px){
   body.sb-open .container{margin-left:290px;}
-  #backdrop{display:none!important;}
+}
+@media(max-width:599px){
+  #sidebar{width:85vw;}
 }
 
 /* ── LAYOUT ── */
@@ -296,7 +306,11 @@ tr:hover td{background:rgba(88,166,255,.05);}
 </div>
 
 <!-- Sidebar Toggle -->
-<button id="sidebar-btn" aria-label="Toggle menu">Contents</button>
+<button id="sidebar-btn" aria-label="Toggle navigation" title="Toggle menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
 <div id="backdrop"></div>
 
 <!-- Sidebar -->
@@ -1543,21 +1557,27 @@ tr:hover td{background:rgba(88,166,255,.05);}
 
   function open(){
     sidebar.classList.add('open');
-    btn.classList.add('shifted');
-    btn.textContent = '✕ Close';
+    btn.classList.add('open');
     document.body.classList.add('sb-open');
-    if(window.innerWidth < 900) backdrop.style.display='block';
+    if(window.innerWidth < 1024) backdrop.style.display='block';
   }
   function close(){
     sidebar.classList.remove('open');
-    btn.classList.remove('shifted');
-    btn.textContent = 'Contents';
+    btn.classList.remove('open');
     document.body.classList.remove('sb-open');
     backdrop.style.display='none';
   }
 
   btn.addEventListener('click', () => sidebar.classList.contains('open') ? close() : open());
   backdrop.addEventListener('click', close);
+
+  // Auto-open on desktop
+  if(window.innerWidth >= 1024) open();
+
+  // Remove overlay on resize to desktop
+  window.addEventListener('resize', () => {
+    if(window.innerWidth >= 1024) backdrop.style.display='none';
+  });
 
   // Active link highlighting
   const links = sidebar.querySelectorAll('a[href^="#"]');
@@ -1578,9 +1598,9 @@ tr:hover td{background:rgba(88,166,255,.05);}
 
   sections.forEach(s => obs.observe(s));
 
-  // Smooth close on link click (mobile)
+  // Close on link click on mobile/tablet
   links.forEach(a => a.addEventListener('click', () => {
-    if(window.innerWidth < 900) close();
+    if(window.innerWidth < 1024) close();
   }));
 })();
 </script>

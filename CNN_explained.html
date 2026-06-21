@@ -528,41 +528,51 @@
     color: #90a8ff;
   }
 
-  /* ── SIDEBAR TOGGLE BUTTON (tab on edge) ── */
+  /* ── HAMBURGER BUTTON ── */
   #sidebar-btn {
     position: fixed;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    z-index: 7999;
-    background: #1c2333;
-    border: 1px solid rgba(67,97,238,0.4);
-    border-left: none;
-    border-radius: 0 10px 10px 0;
+    top: 16px;
+    left: 16px;
+    z-index: 8001;
+    background: rgba(28,35,51,0.95);
+    border: 1px solid rgba(88,166,255,0.3);
+    border-radius: 8px;
     color: #90a8ff;
-    padding: 14px 8px;
+    width: 44px;
+    height: 44px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 5px;
-    transition: background 0.15s, transform 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1);
-    box-shadow: 2px 0 12px rgba(0,0,0,0.4);
-    writing-mode: vertical-rl;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    padding: 0;
+    transition: background 0.2s;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
   }
-  #sidebar-btn:hover { background: rgba(67,97,238,0.15); }
-  #sidebar-btn.shifted { left: 270px; }
+  #sidebar-btn:hover { background: rgba(67,97,238,0.25); }
+  #sidebar-btn .bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+  #sidebar-btn.open .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  #sidebar-btn.open .bar:nth-child(2) { opacity: 0; }
+  #sidebar-btn.open .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-  /* push content when sidebar open on wide screens */
-  @media(min-width:900px) {
+  /* push content when sidebar open on desktop */
+  @media(min-width:1024px) {
     body.sb-open .container { margin-left: 290px; transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
     body.sb-open .hero { padding-left: 290px; transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
     .container { transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1); }
     .hero { transition: padding-left 0.3s cubic-bezier(0.4,0,0.2,1); }
+  }
+  /* mobile: sidebar fills most of screen width */
+  @media(max-width:599px) {
+    #sidebar { width: 85vw; }
   }
   /* mobile: sidebar overlays */
   #sidebar-overlay {
@@ -630,7 +640,11 @@
 </div>
 
 <!-- SIDEBAR TOGGLE TAB -->
-<button id="sidebar-btn" title="Show / Hide contents">Contents</button>
+<button id="sidebar-btn" aria-label="Toggle navigation" title="Toggle menu">
+  <span class="bar"></span>
+  <span class="bar"></span>
+  <span class="bar"></span>
+</button>
 
 <div class="container">
 
@@ -1657,17 +1671,15 @@
 
   function openSidebar() {
     sidebar.classList.add('open');
-    sbBtn.classList.add('shifted');
-    sbOverlay.classList.add('show');
+    sbBtn.classList.add('open');
     document.body.classList.add('sb-open');
-    sbBtn.textContent = 'Hide';
+    if (window.innerWidth < 1024) sbOverlay.classList.add('show');
   }
   function closeSidebar() {
     sidebar.classList.remove('open');
-    sbBtn.classList.remove('shifted');
+    sbBtn.classList.remove('open');
     sbOverlay.classList.remove('show');
     document.body.classList.remove('sb-open');
-    sbBtn.textContent = 'Contents';
   }
   function toggleSidebar() {
     sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
@@ -1677,11 +1689,19 @@
   sbClose.addEventListener('click', closeSidebar);
   sbOverlay.addEventListener('click', closeSidebar);
 
-  // close on nav link click (mobile)
+  // close on nav link click on tablet/mobile
   document.querySelectorAll('.nav-item').forEach(a => {
     a.addEventListener('click', () => {
-      if (window.innerWidth < 900) closeSidebar();
+      if (window.innerWidth < 1024) closeSidebar();
     });
+  });
+
+  // auto-open on desktop
+  if (window.innerWidth >= 1024) openSidebar();
+
+  // remove overlay on resize to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth >= 1024) sbOverlay.classList.remove('show');
   });
 
   // active section highlight on scroll
