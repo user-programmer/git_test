@@ -28,6 +28,109 @@
     font-family: 'Segoe UI', system-ui, sans-serif;
     line-height: 1.7;
     font-size: 16px;
+    transition: font-size 0.25s ease;
+  }
+
+  /* ── FONT CONTROLLER ── */
+  #font-ctrl {
+    position: fixed;
+    bottom: 28px;
+    right: 24px;
+    z-index: 9999;
+    background: #1c2333;
+    border: 1px solid rgba(67,97,238,0.45);
+    border-radius: 16px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(67,97,238,0.1);
+    backdrop-filter: blur(10px);
+    min-width: 240px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #font-ctrl:hover { opacity: 1 !important; }
+  #font-ctrl .fc-icon {
+    font-size: 1rem;
+    color: #90a8ff;
+    flex-shrink: 0;
+    user-select: none;
+  }
+  #font-ctrl .fc-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  #font-ctrl .fc-value {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #90a8ff;
+    min-width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  #font-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 5px;
+    border-radius: 10px;
+    background: linear-gradient(
+      90deg,
+      #4361ee var(--pct, 18.75%),
+      rgba(255,255,255,0.1) var(--pct, 18.75%)
+    );
+    outline: none;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  #font-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #4361ee;
+    border: 3px solid #e6edf3;
+    box-shadow: 0 2px 8px rgba(67,97,238,0.6);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #font-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 2px 16px rgba(67,97,238,0.9);
+  }
+  #font-slider::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: #4361ee;
+    border: 3px solid #e6edf3;
+    box-shadow: 0 2px 8px rgba(67,97,238,0.6);
+    cursor: pointer;
+  }
+  #fc-reset {
+    background: none;
+    border: 1px solid rgba(67,97,238,0.35);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  #fc-reset:hover {
+    background: rgba(67,97,238,0.15);
+    color: #90a8ff;
+    border-color: rgba(67,97,238,0.6);
+  }
+  @media(max-width:480px) {
+    #font-ctrl {
+      bottom: 16px; right: 12px; left: 12px;
+      min-width: unset;
+    }
   }
 
   /* ── HERO ── */
@@ -1405,9 +1508,62 @@
 
 </div>
 
-<div style="text-align:center;padding:30px;color:var(--muted);font-size:0.82rem;border-top:1px solid var(--border);margin-top:20px">
+<div style="text-align:center;padding:30px 20px 100px;color:var(--muted);font-size:0.82rem;border-top:1px solid var(--border);margin-top:20px">
   CNN Explained — 5 Animal Dataset Guide
 </div>
+
+<!-- FONT SIZE CONTROLLER -->
+<div id="font-ctrl">
+  <span class="fc-icon">A</span>
+  <span class="fc-label">Font</span>
+  <input id="font-slider" type="range" min="10" max="64" step="1" value="16"
+         aria-label="Font size">
+  <span class="fc-value" id="fc-val">16px</span>
+  <button id="fc-reset" title="Reset to default">Reset</button>
+</div>
+
+<script>
+  const DEFAULT_SIZE = 16;
+  const MIN = 10, MAX = 64;
+
+  const slider  = document.getElementById('font-slider');
+  const valLbl  = document.getElementById('fc-val');
+  const resetBtn= document.getElementById('fc-reset');
+
+  function applySize(px) {
+    document.body.style.fontSize = px + 'px';
+    valLbl.textContent = px + 'px';
+    const pct = ((px - MIN) / (MAX - MIN) * 100).toFixed(2) + '%';
+    slider.style.setProperty('--pct', pct);
+  }
+
+  // set default on load
+  slider.value = DEFAULT_SIZE;
+  applySize(DEFAULT_SIZE);
+
+  slider.addEventListener('input', () => applySize(Number(slider.value)));
+
+  resetBtn.addEventListener('click', () => {
+    slider.value = DEFAULT_SIZE;
+    applySize(DEFAULT_SIZE);
+  });
+
+  // fade controller when idle, show on hover/touch
+  let hideTimer;
+  const ctrl = document.getElementById('font-ctrl');
+  function showCtrl() {
+    ctrl.style.opacity = '1';
+    ctrl.style.transform = 'translateY(0)';
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      ctrl.style.opacity = '0.45';
+    }, 3000);
+  }
+  ctrl.addEventListener('mouseenter', showCtrl);
+  ctrl.addEventListener('touchstart', showCtrl);
+  document.addEventListener('scroll', showCtrl, { passive: true });
+  showCtrl();
+</script>
 
 </body>
 </html>
