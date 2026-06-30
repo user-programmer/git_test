@@ -1,26 +1,77 @@
 """
 Rainbow Robotics — Display 2
-Animation: Hyperspace warp — stars zoom from center leaving rainbow trails,
-           company name glows in the middle
+Animation: Hyperspace warp — stars zoom from center leaving rainbow trails
+
+Usage:
+  python display_27inch.py                  # primary monitor
+  python display_27inch.py --monitor 1      # second monitor (0-indexed)
+  python display_27inch.py --x 1920 --y 0  # manual offset if screeninfo missing
 """
 import tkinter as tk
 import math
 import random
+import sys
 
 COMPANY = "Rainbow Robotics"
 BG = "#000005"
+
+# ── monitor targeting ────────────────────────────────────────────────────────
+
+def parse_args():
+    args = sys.argv[1:]
+    monitor = 0
+    x = y = None
+    try:
+        if "--monitor" in args:
+            monitor = int(args[args.index("--monitor") + 1])
+        if "--x" in args:
+            x = int(args[args.index("--x") + 1])
+        if "--y" in args:
+            y = int(args[args.index("--y") + 1])
+    except (IndexError, ValueError):
+        pass
+    return monitor, x, y
+
+def get_monitor_rect(index, manual_x, manual_y):
+    if manual_x is not None:
+        return manual_x, manual_y or 0, None, None
+    try:
+        from screeninfo import get_monitors
+        monitors = get_monitors()
+        if index < len(monitors):
+            m = monitors[index]
+            return m.x, m.y, m.width, m.height
+        print(f"Monitor {index} not found — {len(monitors)} monitor(s) detected.")
+    except ImportError:
+        print("screeninfo not installed. Run: pip install screeninfo")
+        print("Or use --x / --y to supply the monitor's top-left pixel offset.")
+    return None
+
+def place_window(root, index, manual_x, manual_y):
+    rect = get_monitor_rect(index, manual_x, manual_y)
+    if rect:
+        x, y, w, h = rect
+        if w and h:
+            root.geometry(f"{w}x{h}+{x}+{y}")
+        else:
+            root.update_idletasks()
+            root.geometry(f"+{x}+{y}")
+        root.overrideredirect(True)
+        return w or root.winfo_screenwidth(), h or root.winfo_screenheight()
+    else:
+        root.attributes("-fullscreen", True)
+        return root.winfo_screenwidth(), root.winfo_screenheight()
+
+# ── helpers ──────────────────────────────────────────────────────────────────
 
 def hue_to_rgb(h):
     h = h % 1.0
     i = int(h * 6)
     f = h * 6 - i
     q = 1 - f
-    combos = [
-        (1, f, 0), (q, 1, 0), (0, 1, f),
-        (0, q, 1), (f, 0, 1), (1, 0, q),
-    ]
+    combos = [(1,f,0),(q,1,0),(0,1,f),(0,q,1),(f,0,1),(1,0,q)]
     r, g, b = combos[i % 6]
-    return int(r * 255), int(g * 255), int(b * 255)
+    return int(r*255), int(g*255), int(b*255)
 
 def rgb(r, g, b):
     return f"#{max(0,min(255,r)):02x}{max(0,min(255,g)):02x}{max(0,min(255,b)):02x}"
@@ -47,48 +98,34 @@ class Star:
 
     def screen_pos(self, cx, cy, max_r):
         r = (1 - self.depth) * max_r
-        x = cx + r * math.cos(self.angle)
-        y = cy + r * math.sin(self.angle)
-        return x, y
+        return cx + r * math.cos(self.angle), cy + r * math.sin(self.angle)
 
     def trail_pos(self, cx, cy, max_r):
-        r = (1 - self.depth + self.speed * 6) * max_r
-        r = min(r, max_r * 1.2)
-        x = cx + r * math.cos(self.angle)
-        y = cy + r * math.sin(self.angle)
-        return x, y
+        r = min((1 - self.depth + self.speed * 6) * max_r, max_r * 1.2)
+        return cx + r * math.cos(self.angle), cy + r * math.sin(self.angle)
 
     def brightness(self):
         return max(0, min(255, int((1 - self.depth) * 255)))
 
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, W, H):
         self.root = root
-        root.title("Rainbow Robotics")
-        root.configure(bg=BG)
-        root.attributes("-fullscreen", True)
+        self.W = W
+        self.H = H
+        self.cx = W // 2
+        self.cy = H // 2
+        self.max_r = math.hypot(W, H) * 0.55
         root.bind("<Escape>", lambda e: root.destroy())
 
-        self.W = root.winfo_screenwidth()
-        self.H = root.winfo_screenheight()
-        self.cx = self.W // 2
-        self.cy = self.H // 2
-        self.max_r = math.hypot(self.W, self.H) * 0.55
-
-        self.canvas = tk.Canvas(root, width=self.W, height=self.H,
-                                bg=BG, highlightthickness=0)
+        self.canvas = tk.Canvas(root, width=W, height=H, bg=BG, highlightthickness=0)
         self.canvas.pack()
 
         self.stars = [Star() for _ in range(500)]
-        # spread initial depths
-        for s in self.stars:
-            s.depth = random.uniform(0.01, 1.0)
-
-        self.star_items = []
-        for _ in self.stars:
-            line = self.canvas.create_line(0, 0, 0, 0, fill="#ffffff", width=1)
-            self.star_items.append(line)
+        self.star_items = [
+            self.canvas.create_line(0, 0, 0, 0, fill="#ffffff", width=1)
+            for _ in self.stars
+        ]
 
         self._build_title()
         self.tick = 0
@@ -96,45 +133,38 @@ class App:
 
     def _build_title(self):
         cx, cy = self.cx, self.cy
-        # layered glow
-        for off, col in [(8, "#000820"), (4, "#001840"), (2, "#003060")]:
-            self.canvas.create_text(cx + off, cy + off, text=COMPANY,
+        for off, col in [(8,"#000820"),(4,"#001840"),(2,"#003060")]:
+            self.canvas.create_text(cx+off, cy+off, text=COMPANY,
                 font=("Impact", 96, "bold"), fill=col)
         self.title_id = self.canvas.create_text(
-            cx, cy, text=COMPANY,
-            font=("Impact", 96, "bold"), fill="#00eeff"
-        )
+            cx, cy, text=COMPANY, font=("Impact", 96, "bold"), fill="#00eeff")
         self.sub_id = self.canvas.create_text(
             cx, cy + 70,
             text="A U T O M A T I O N  •  I N T E L L I G E N C E",
-            font=("Courier New", 22, "bold"),
-            fill="#003344"
-        )
+            font=("Courier New", 22, "bold"), fill="#003344")
 
     def _animate(self):
         self.tick += 1
         cx, cy = self.cx, self.cy
 
-        for i, (star, item) in enumerate(zip(self.stars, self.star_items)):
+        for star, item in zip(self.stars, self.star_items):
             star.update()
             x1, y1 = star.screen_pos(cx, cy, self.max_r)
             x2, y2 = star.trail_pos(cx, cy, self.max_r)
             bright = star.brightness()
             r, g, b = hue_to_rgb(star.hue)
             scale = bright / 255
-            color = rgb(int(r * scale), int(g * scale), int(b * scale))
+            color = rgb(int(r*scale), int(g*scale), int(b*scale))
             width = max(1, int((1 - star.depth) * 3))
             self.canvas.coords(item, x1, y1, x2, y2)
             self.canvas.itemconfig(item, fill=color, width=width)
 
-        # pulse title color through hues
         hue = (self.tick / 200) % 1.0
         r, g, b = hue_to_rgb(hue)
         self.canvas.itemconfig(self.title_id, fill=rgb(r, g, b))
 
-        # sub text dim pulse
         sub_bright = int(40 + 30 * math.sin(self.tick / 30))
-        self.canvas.itemconfig(self.sub_id, fill=rgb(0, sub_bright, sub_bright + 10))
+        self.canvas.itemconfig(self.sub_id, fill=rgb(0, sub_bright, sub_bright+10))
 
         self.canvas.tag_raise(self.title_id)
         self.canvas.tag_raise(self.sub_id)
@@ -143,6 +173,11 @@ class App:
 
 
 if __name__ == "__main__":
+    monitor_idx, manual_x, manual_y = parse_args()
     root = tk.Tk()
-    App(root)
+    root.title("Rainbow Robotics")
+    root.configure(bg=BG)
+    root.update_idletasks()
+    W, H = place_window(root, monitor_idx, manual_x, manual_y)
+    App(root, W, H)
     root.mainloop()

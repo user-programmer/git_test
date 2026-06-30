@@ -1,15 +1,69 @@
 """
 Rainbow Robotics — Display 3
 Animation: Kaleidoscope of rotating geometric petals in rainbow colors
-           with the company name morphing between colors at the top
+
+Usage:
+  python display_34inch.py                  # primary monitor
+  python display_34inch.py --monitor 2      # third monitor (0-indexed)
+  python display_34inch.py --x 3840 --y 0  # manual offset if screeninfo missing
 """
 import tkinter as tk
 import math
+import sys
 
 COMPANY = "Rainbow Robotics"
 BG = "#000000"
-NUM_ARMS = 8       # symmetry arms
-LAYERS = 6         # concentric petal layers
+NUM_ARMS = 8
+LAYERS = 6
+
+# ── monitor targeting ────────────────────────────────────────────────────────
+
+def parse_args():
+    args = sys.argv[1:]
+    monitor = 0
+    x = y = None
+    try:
+        if "--monitor" in args:
+            monitor = int(args[args.index("--monitor") + 1])
+        if "--x" in args:
+            x = int(args[args.index("--x") + 1])
+        if "--y" in args:
+            y = int(args[args.index("--y") + 1])
+    except (IndexError, ValueError):
+        pass
+    return monitor, x, y
+
+def get_monitor_rect(index, manual_x, manual_y):
+    if manual_x is not None:
+        return manual_x, manual_y or 0, None, None
+    try:
+        from screeninfo import get_monitors
+        monitors = get_monitors()
+        if index < len(monitors):
+            m = monitors[index]
+            return m.x, m.y, m.width, m.height
+        print(f"Monitor {index} not found — {len(monitors)} monitor(s) detected.")
+    except ImportError:
+        print("screeninfo not installed. Run: pip install screeninfo")
+        print("Or use --x / --y to supply the monitor's top-left pixel offset.")
+    return None
+
+def place_window(root, index, manual_x, manual_y):
+    rect = get_monitor_rect(index, manual_x, manual_y)
+    if rect:
+        x, y, w, h = rect
+        if w and h:
+            root.geometry(f"{w}x{h}+{x}+{y}")
+        else:
+            root.update_idletasks()
+            root.geometry(f"+{x}+{y}")
+        root.overrideredirect(True)
+        return w or root.winfo_screenwidth(), h or root.winfo_screenheight()
+    else:
+        root.attributes("-fullscreen", True)
+        return root.winfo_screenwidth(), root.winfo_screenheight()
+
+# ── helpers ──────────────────────────────────────────────────────────────────
 
 def hsv_to_rgb(h, s=1.0, v=1.0):
     h = h % 1.0
@@ -25,41 +79,35 @@ def hsv_to_rgb(h, s=1.0, v=1.0):
 def rgb(r, g, b):
     return f"#{max(0,min(255,r)):02x}{max(0,min(255,g)):02x}{max(0,min(255,b)):02x}"
 
+def lerp(a, b, t):
+    return a + (b - a) * t
+
 
 class App:
-    def __init__(self, root):
+    def __init__(self, root, W, H):
         self.root = root
-        root.title("Rainbow Robotics")
-        root.configure(bg=BG)
-        root.attributes("-fullscreen", True)
+        self.W = W
+        self.H = H
+        self.cx = W // 2
+        self.cy = H // 2 + 40
         root.bind("<Escape>", lambda e: root.destroy())
 
-        self.W = root.winfo_screenwidth()
-        self.H = root.winfo_screenheight()
-        self.cx = self.W // 2
-        self.cy = self.H // 2 + 40   # shift center down a bit for title room
-
-        self.canvas = tk.Canvas(root, width=self.W, height=self.H,
-                                bg=BG, highlightthickness=0)
+        self.canvas = tk.Canvas(root, width=W, height=H, bg=BG, highlightthickness=0)
         self.canvas.pack()
 
-        # pre-allocate polygon items: layers * arms * 2 (petal + inner)
         self.petals = []
-        for layer in range(LAYERS):
+        for _ in range(LAYERS):
             row = []
-            for arm in range(NUM_ARMS):
-                pid = self.canvas.create_polygon(0, 0, 0, 0, 0, 0,
-                                                  fill="#000000", outline="")
-                inner = self.canvas.create_polygon(0, 0, 0, 0, 0, 0,
-                                                    fill="#000000", outline="")
+            for _ in range(NUM_ARMS):
+                pid = self.canvas.create_polygon(0,0,0,0,0,0, fill="#000", outline="")
+                inner = self.canvas.create_polygon(0,0,0,0,0,0, fill="#000", outline="")
                 row.append((pid, inner))
             self.petals.append(row)
 
-        # outer glow ring
-        self.ring_items = []
-        for _ in range(60):
-            rid = self.canvas.create_oval(0, 0, 2, 2, fill="#ffffff", outline="")
-            self.ring_items.append(rid)
+        self.ring_items = [
+            self.canvas.create_oval(0,0,2,2, fill="#fff", outline="")
+            for _ in range(60)
+        ]
 
         self._build_title()
         self.tick = 0
@@ -72,58 +120,40 @@ class App:
             self.canvas.create_text(cx+off, y+off, text=COMPANY,
                 font=("Impact", 80, "bold"), fill=col)
         self.title_id = self.canvas.create_text(
-            cx, y, text=COMPANY,
-            font=("Impact", 80, "bold"), fill="#ffffff"
-        )
-        # decorative line under title
+            cx, y, text=COMPANY, font=("Impact", 80, "bold"), fill="#ffffff")
         self.bar_l = self.canvas.create_rectangle(
-            cx - 380, y + 54, cx - 20, y + 58, fill="#aa00ff", outline=""
-        )
+            cx-380, y+54, cx-20, y+58, fill="#aa00ff", outline="")
         self.bar_r = self.canvas.create_rectangle(
-            cx + 20, y + 54, cx + 380, y + 58, fill="#ff0088", outline=""
-        )
+            cx+20, y+54, cx+380, y+58, fill="#ff0088", outline="")
 
-    def _petal_points(self, cx, cy, angle_offset, radius, petal_w, n_points=12):
+    def _petal_points(self, cx, cy, angle_offset, radius, petal_w, n=16):
         pts = []
-        for i in range(n_points + 1):
-            t = i / n_points
+        for i in range(n + 1):
+            t = i / n
             a = angle_offset + petal_w * (t - 0.5)
             r = radius * math.sin(t * math.pi) ** 0.7
-            pts.append(cx + r * math.cos(a))
-            pts.append(cy + r * math.sin(a))
+            pts += [cx + r * math.cos(a), cy + r * math.sin(a)]
         return pts
 
     def _animate(self):
         self.tick += 1
         t = self.tick / 60.0
         cx, cy = self.cx, self.cy
-
-        symmetry_angle = (2 * math.pi) / NUM_ARMS
-        petal_w = symmetry_angle * 0.72
+        sym = (2 * math.pi) / NUM_ARMS
+        petal_w = sym * 0.72
 
         for li, layer_row in enumerate(self.petals):
-            base_radius = 60 + li * 68
-            rot_speed = (0.18 + li * 0.06) * (1 if li % 2 == 0 else -1)
-            rotation = t * rot_speed
-
+            base_r = 60 + li * 68
+            rot = t * (0.18 + li * 0.06) * (1 if li % 2 == 0 else -1)
             for ai, (pid, inner_id) in enumerate(layer_row):
-                arm_angle = ai * symmetry_angle + rotation
+                arm_angle = ai * sym + rot
                 hue = ((li / LAYERS) + (ai / NUM_ARMS) * 0.5 + t * 0.08) % 1.0
-                r, g, b = hsv_to_rgb(hue, 0.9, 1.0)
-                color = rgb(r, g, b)
-
-                pts = self._petal_points(cx, cy, arm_angle, base_radius, petal_w, n_points=16)
-                self.canvas.coords(pid, *pts)
-                self.canvas.itemconfig(pid, fill=color, outline="")
-
-                # inner bright petal (smaller)
+                self.canvas.coords(pid, *self._petal_points(cx, cy, arm_angle, base_r, petal_w))
+                self.canvas.itemconfig(pid, fill=rgb(*hsv_to_rgb(hue, 0.9, 1.0)), outline="")
                 hue2 = (hue + 0.08) % 1.0
-                r2, g2, b2 = hsv_to_rgb(hue2, 0.5, 1.0)
-                inner_pts = self._petal_points(cx, cy, arm_angle, base_radius * 0.55, petal_w * 0.7, n_points=12)
-                self.canvas.coords(inner_id, *inner_pts)
-                self.canvas.itemconfig(inner_id, fill=rgb(r2, g2, b2), outline="")
+                self.canvas.coords(inner_id, *self._petal_points(cx, cy, arm_angle, base_r*0.55, petal_w*0.7, n=12))
+                self.canvas.itemconfig(inner_id, fill=rgb(*hsv_to_rgb(hue2, 0.5, 1.0)), outline="")
 
-        # rotating dot ring around entire kaleidoscope
         outer_r = 60 + (LAYERS - 1) * 68 + 50
         for i, rid in enumerate(self.ring_items):
             angle = (i / len(self.ring_items)) * 2 * math.pi + t * 0.4
@@ -132,25 +162,15 @@ class App:
             hue = (i / len(self.ring_items) + t * 0.05) % 1.0
             r, g, b = hsv_to_rgb(hue)
             bright = int(100 + 80 * math.sin(t * 3 + i * 0.2))
-            col = rgb(int(r * bright / 255), int(g * bright / 255), int(b * bright / 255))
+            col = rgb(int(r*bright/255), int(g*bright/255), int(b*bright/255))
             sz = 2 + math.sin(t * 2 + i * 0.3)
-            self.canvas.coords(rid, x - sz, y - sz, x + sz, y + sz)
+            self.canvas.coords(rid, x-sz, y-sz, x+sz, y+sz)
             self.canvas.itemconfig(rid, fill=col)
 
-        # title color pulse
         hue_t = (t * 0.15) % 1.0
-        r, g, b = hsv_to_rgb(hue_t, 0.7, 1.0)
-        self.canvas.itemconfig(self.title_id, fill=rgb(r, g, b))
-
-        # bar color pulse
-        hue_b = (hue_t + 0.5) % 1.0
-        rb, gb, bb = hsv_to_rgb(hue_b)
-        self.canvas.itemconfig(self.bar_l, fill=rgb(rb, gb, bb))
-        hue_b2 = (hue_t + 0.75) % 1.0
-        rb2, gb2, bb2 = hsv_to_rgb(hue_b2)
-        self.canvas.itemconfig(self.bar_r, fill=rgb(rb2, gb2, bb2))
-
-        # keep title above all
+        self.canvas.itemconfig(self.title_id, fill=rgb(*hsv_to_rgb(hue_t, 0.7, 1.0)))
+        self.canvas.itemconfig(self.bar_l, fill=rgb(*hsv_to_rgb((hue_t+0.5)%1.0)))
+        self.canvas.itemconfig(self.bar_r, fill=rgb(*hsv_to_rgb((hue_t+0.75)%1.0)))
         self.canvas.tag_raise(self.title_id)
         self.canvas.tag_raise(self.bar_l)
         self.canvas.tag_raise(self.bar_r)
@@ -159,6 +179,11 @@ class App:
 
 
 if __name__ == "__main__":
+    monitor_idx, manual_x, manual_y = parse_args()
     root = tk.Tk()
-    App(root)
+    root.title("Rainbow Robotics")
+    root.configure(bg=BG)
+    root.update_idletasks()
+    W, H = place_window(root, monitor_idx, manual_x, manual_y)
+    App(root, W, H)
     root.mainloop()
